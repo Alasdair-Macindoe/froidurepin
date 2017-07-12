@@ -14,9 +14,7 @@ NaiveSemiGroupEnumeration := function(generators)
   for a in results do
     for g in generators do
       temp_res := a * g;
-      if temp_res in results then
-        continue;
-      else
+      if not temp_res in results then
         Add(results, temp_res);
       fi;
     od;
