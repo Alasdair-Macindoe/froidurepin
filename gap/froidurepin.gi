@@ -1,4 +1,4 @@
-SimplifiedFroidurePin := function(generators)
+InstallGlobalFunction(SimplifiedFroidurePin, function(generators)
   # last is the last element of the current list
   # i is the index for a loop used later
   # ua is the place holder of u * a
@@ -36,4 +36,4 @@ SimplifiedFroidurePin := function(generators)
     u := u.next;
   until u = fail;
   return results;
-end;
+end);
