@@ -1,1 +1,1 @@
-ReadPackage( "froidurepin", "gap/froidurepin.gd");
+ReadPackage( "FroidurePin", "gap/froidurepin.gd");
