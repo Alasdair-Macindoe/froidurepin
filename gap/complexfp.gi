@@ -15,6 +15,29 @@ _NewDataStructure := function(v, f, l, p, s, n, k, len)
         );
 end;
 
+_InitialiseFirstValue := function(generators, u, k, results, last)
+  local l, #temporary look up variable
+        i; #temporary loop variable
+  for i in [1 .. k] do
+    l := LookupDictionary(results, generators[i]);
+
+    if l = fail then
+
+      last.next := _NewDataStructure(generators[i], i, i, u, u, fail, k, 1);
+      last := last.next;
+      u.prefixUA[i] := last;
+      u.prefixUAFlag[i] := true;
+      u.prefixAU[i] := last;
+
+      AddDictionary(results, generators[i], last);
+
+    else
+      u.prefixUA[i] := 1;
+      u.prefixUAFlag[i] := false;
+    fi;
+  od;
+end;
+
 InstallGlobalFunction(FullFroidurePin, function(generators)
   local u, #current element in our universe
         v, # holder for the first element we compute
@@ -29,21 +52,22 @@ InstallGlobalFunction(FullFroidurePin, function(generators)
   k := Length(generators);
   #Special case first entry
   u := _NewDataStructure(generators[1], 0, 0, fail, fail, fail, k, 1);
-  v := u;
-  last := generators[k];
+  last := u;
   currentLength := 1;
   results := NewDictionary(u, true);
-  AddDictionary(results, generators[1], u);
+
+  #Add values in generator to results
+  _InitialiseFirstValue(generators, u, k, results, last);
+  u := LookupDictionary(results, generators[1]);
+  v := u;
 
   repeat
-
     #In this part we compute ua_i
-    while u.length = currentLength do
+    while u <> fail and (u.length = currentLength) do
       b := u.first;
       s := u.suffix;
 
       for i in [1 .. k] do
-
         if s.prefixUAFlag[i] = false then
           r := s.prefixUA[i];
 
@@ -60,7 +84,7 @@ InstallGlobalFunction(FullFroidurePin, function(generators)
           v_ua := u.value * generators[i];
           l := LookupDictionary(results, v_ua); #Look up in our results to see if it exist
 
-          if not l = fail then
+          if l <> fail then
             u.prefixUA[i] := l;
             u.prefixUAFlag[i] := false;
           else #if l = fail
@@ -79,8 +103,7 @@ InstallGlobalFunction(FullFroidurePin, function(generators)
     od;
 
     u := v;
-
-    while u.length = currentLength do
+    while u <> fail and (u.length = currentLength) do
       p := u.prefix;
 
       for i in [1 .. k] do
@@ -88,10 +111,11 @@ InstallGlobalFunction(FullFroidurePin, function(generators)
       od;
 
       u := u.next;
-      currentLength := currentLength + 1;
     od;
 
-  until u = last;
+    v := u;
+    currentLength := currentLength + 1;
+  until u = last or u = fail;
 
   return results;
 end);
