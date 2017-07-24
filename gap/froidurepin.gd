@@ -1,3 +1,3 @@
 DeclareGlobalFunction("ConcurrentFroidurePin");
-DeclareGlobalFunction("FullFroidurePin");
+DeclareGlobalFunction("FroidurePin");
 DeclareGlobalFunction("SimplifiedFroidurePin");

@@ -1,3 +1,15 @@
+_CreateResults := function(u)
+  return NewDictionary(u, true);
+end;
+
+_Get := function(ds, value)
+  return LookupDictionary(ds, value);
+end;
+
+_Add := function(ds, key, value)
+  AddDictionary(ds, key, value);
+end;
+
 #Recall everyword is a produced by u * a = v
 _NewDataStructure := function(v, f, l, p, s, n, k, len)
   return rec(
@@ -19,7 +31,8 @@ _InitialiseFirstValue := function(generators, u, k, results, last)
   local l, #temporary look up variable
         i; #temporary loop variable
   for i in [1 .. k] do
-    l := LookupDictionary(results, generators[i]);
+
+    l := _Get(results, generators[i]);
 
     if l = fail then
 
@@ -29,16 +42,18 @@ _InitialiseFirstValue := function(generators, u, k, results, last)
       u.prefixUAFlag[i] := true;
       u.prefixAU[i] := last;
 
-      AddDictionary(results, generators[i], last);
+      _Add(results, generators[i], last);
 
     else
       u.prefixUA[i] := 1;
       u.prefixUAFlag[i] := false;
     fi;
+
   od;
+
 end;
 
-InstallGlobalFunction(FullFroidurePin, function(generators)
+InstallGlobalFunction(FroidurePin, function(generators)
   local u, #current element in our universe
         v, # holder for the first element we compute
         last, #The final elemement in our list of generators
@@ -54,11 +69,11 @@ InstallGlobalFunction(FullFroidurePin, function(generators)
   u := _NewDataStructure(generators[1], 0, 0, fail, fail, fail, k, 1);
   last := u;
   currentLength := 1;
-  results := NewDictionary(u, true);
+  results := _CreateResults(u);
 
   #Add values in generator to results
   _InitialiseFirstValue(generators, u, k, results, last);
-  u := LookupDictionary(results, generators[1]);
+  u := _Get(results, generators[1]);
   v := u;
 
   repeat
@@ -82,7 +97,7 @@ InstallGlobalFunction(FullFroidurePin, function(generators)
 
         else
           v_ua := u.value * generators[i];
-          l := LookupDictionary(results, v_ua); #Look up in our results to see if it exist
+          l := _Get(results, v_ua); #Look up in our results to see if it exist
 
           if l <> fail then
             u.prefixUA[i] := l;
@@ -91,7 +106,7 @@ InstallGlobalFunction(FullFroidurePin, function(generators)
             last.next := _NewDataStructure(v_ua, b, i, u, s.prefixUA[i], fail, k, u.length + 1);
             u.prefixUA[i] := last.next;
             u.prefixUAFlag[i] := true;
-            AddDictionary(results, v_ua, last.next);
+            _Add(results, v_ua, last.next);
             last := last.next;
           fi;
 
