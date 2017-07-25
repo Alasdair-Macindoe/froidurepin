@@ -53,14 +53,45 @@ _InitialiseFirstValue := function(generators, u, k, results, last)
 
 end;
 
+_Update := function(generators, i, u, results, last, k)
+  local l, b, s, r, c, t, #temporary variables used in loops defined by paper
+        v_ua; #temporary product of multiplication v(ua)
+  b := u.first;
+  s := u.suffix;
+  #This part effectively forms the "update" part
+  if s.prefixUAFlag[i] = false then #not reduced
+    r := s.prefixUA[i];
+    if r.length = 0 then #if r is the empty word
+      s.prefixUA[i] := b;
+    else
+      c := r.last;
+      t := r.prefixUA[i];
+      #p(p(bt)c)
+      s.prefixUA[i] := t.prefixAU[b].prefixUA[c];
+    fi;
+  else #if it is already reduced
+    v_ua := u.value * generators[i];
+    l := _Get(results, v_ua); #Look up in our results to see if it exist
+    if l <> fail then
+      u.prefixUA[i] := l;
+      u.prefixUAFlag[i] := false;
+    else #if l = fail
+      last.next := _NewDataStructure(v_ua, b, i, u, s.prefixUA[i], fail, k, u.length + 1);
+      u.prefixUA[i] := last.next;
+      u.prefixUAFlag[i] := true;
+      _Add(results, v_ua, last.next);
+      last := last.next;
+    fi;
+  fi;
+end;
+
 InstallGlobalFunction(FroidurePin, function(generators)
   local u, #current element in our universe
         v, # holder for the first element we compute
         last, #The final elemement in our list of generators
         currentLength, #the current length of ??
         k, #the number of generators we have received
-        b, s, i, r, c, t, p, l, #temporary variables used in loops defined by paper
-        v_ua, #temporary variable v(ua_i)
+        i, p, #temporary variables used in loops defined by paper
         results;
 
   #Initialisation
@@ -79,41 +110,9 @@ InstallGlobalFunction(FroidurePin, function(generators)
   repeat
     #In this part we compute ua_i
     while u <> fail and (u.length = currentLength) do
-      b := u.first;
-      s := u.suffix;
-
       for i in [1 .. k] do
-        if s.prefixUAFlag[i] = false then
-          r := s.prefixUA[i];
-
-          if r.length = 0 then #if r is the empty word
-            s.prefixUA[i] := b;
-          else
-            c := r.last;
-            t := r.prefixUA[i];
-            #p(p(bt)c)
-            s.prefixUA[i] := t.prefixAU[b].prefixUA[c];
-          fi;
-
-        else
-          v_ua := u.value * generators[i];
-          l := _Get(results, v_ua); #Look up in our results to see if it exist
-
-          if l <> fail then
-            u.prefixUA[i] := l;
-            u.prefixUAFlag[i] := false;
-          else #if l = fail
-            last.next := _NewDataStructure(v_ua, b, i, u, s.prefixUA[i], fail, k, u.length + 1);
-            u.prefixUA[i] := last.next;
-            u.prefixUAFlag[i] := true;
-            _Add(results, v_ua, last.next);
-            last := last.next;
-          fi;
-
-        fi;
-
+        _Update(generators, i, u, results, last, k);
       od;
-
       u := u.next;
     od;
 
