@@ -85,7 +85,7 @@ _Update := function(generators, i, u, results, last, k)
   fi;
 end;
 
-InstallGlobalFunction(FroidurePin, function(generators)
+InstallGlobalFunction(SequentialFroidurePin, function(generators)
   local u, #current element in our universe
         v, # holder for the first element we compute
         last, #The final elemement in our list of generators
