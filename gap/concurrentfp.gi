@@ -42,10 +42,10 @@ _NewDataStructure := function(v, f, l, p, s, n, k, len)
         prefix := p, #the prefix of this word
         suffix := s, #the suffix of this word
         next := n, #the successor of this element
-        prefixUA := [1 .. k] * 0, # the value of p(ua) for all a in generators
-        prefixUAFlag := [1 .. k] * 0, #flags for reduced or not for above
-        prefixAU := [1 .. k] * 0,
-        prefixAUFlag := [1 .. k] * 0,
+        right := [1 .. k] * 0, # the value of p(ua) for all a in generators
+        rightFlag := [1 .. k] * 0, #flags for reduced or not for above
+        left := [1 .. k] * 0,
+        leftFlag := [1 .. k] * 0,
         length := len #length of u
         );
 end;
@@ -69,15 +69,15 @@ _InitialiseFirstValue := function(generators, u, k, results, last)
       temp_ds := _NewDataStructure(generators[i], i, i, u.value, u.value, fail, k, 1);
       last.next := temp_ds.value;
       last := temp_ds;
-      u.prefixUA[i] := last.value;
-      u.prefixUAFlag[i] := true;
-      u.prefixAU[i] := last.value;
+      u.right[i] := last.value;
+      u.rightFlag[i] := true;
+      u.left[i] := last.value;
 
       _Add(results, temp_ds.value, temp_ds);
 
     else
-      u.prefixUA[i] := 1;
-      u.prefixUAFlag[i] := false;
+      u.right[i] := 1;
+      u.rightFlag[i] := false;
     fi;
 
   od;
@@ -102,29 +102,29 @@ _ApplyGenerators := function(generators, i, u, results, last, k, queues)
   s := _Get(results, u.suffix);
   bw := i; #This may be updated in the future
 
-  if s.prefixUAFlag[i] = false then #not reduced
-    r := s.prefixUA[i]; #find the right hand part eg for ua find u
+  if s.rightFlag[i] = false then #not reduced
+    r := s.right[i]; #find the right hand part eg for ua find u
     if r.length = 0 then #if r is the empty word
-      s.prefixUA[i] := b;
+      s.right[i] := b;
     else #if not the empty word
       c := r.last;
-      t := _Get(results, r.prefixUA[i]);
+      t := _Get(results, r.right[i]);
       #p(p(bt)c)
-      s.prefixUA[i] := _Get(results, t.prefixAU[b]).prefixUA[c];
+      s.right[i] := _Get(results, t.left[b]).right[c];
     fi;
   else #if it is already reduced
     v_ua := u.value * generators[i];
     l := _Get(results, v_ua); #Look up in our results to see if it exist
     if l <> fail then
-      u.prefixUA[i] := l.value;
-      u.prefixUAFlag[i] := false;
+      u.right[i] := l.value;
+      u.rightFlag[i] := false;
     else #if l = fail
       #Store the element in the last datastructure, but add the entire
       #datastrcture to the queue
-      temp_ds := _NewDataStructure(v_ua, b, i, u.value, s.prefixUA[i], fail, k, u.length + 1);
+      temp_ds := _NewDataStructure(v_ua, b, i, u.value, s.right[i], fail, k, u.length + 1);
       last.next := temp_ds.value;
-      u.prefixUA[i] := last.next;
-      u.prefixUAFlag[i] := true;
+      u.right[i] := last.next;
+      u.rightFlag[i] := true;
       _AddQueue(queues, bw, temp_ds);
       last := temp_ds;
     fi;
@@ -150,8 +150,8 @@ _ProcessQueues := function(queue, results, bw)
     l := _Get(results, v_wa.value);
 
     if l <> fail then
-      l.prefixUA[l.last] := v_wa.value;
-      l.prefixUAFlag[l.last] := true;
+      l.right[l.last] := v_wa.value;
+      l.rightFlag[l.last] := true;
     else
       _Add(results, v_wa.value, v_wa);
     fi;
@@ -211,7 +211,7 @@ InstallGlobalFunction(FroidurePin, function(generators)
       p := _Get(results, u.prefix);
 
       for i in [1 .. k] do
-        u.prefixAU[i] := _Get(results, p.prefixAU[i]).prefixUA[u.last];
+        u.left[i] := _Get(results, p.left[i]).right[u.last];
       od;
 
       u := _Get(results, u.next);
