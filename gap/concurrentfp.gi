@@ -50,6 +50,22 @@ _NewDataStructure := function(v, f, l, p, s, n, k, len)
         );
 end;
 
+_Copy := function(ds)
+  return _NewDataStructure(ds.value, ds.first, ds.last, ds.prefix, ds.suffix, ds.next, Length(ds.right), ds.length);
+end;
+
+_RenewDS := function(ds, v, f, l, p, s, n, k, len)
+  ds.value := v;
+  ds.first := f;
+  ds.last := l;
+  ds.prefix := p;
+  ds.suffix := s;
+  ds.next := n;
+  ds.right := [1 .. k] *0;
+  ds.rightFlag := [1 .. k] *0;
+  ds.left := [1 .. k] * 0;
+  ds.length := len;
+end;
 
 ###
 # Method required to add the generators to the data structure for the output
@@ -58,7 +74,7 @@ end;
 ###
 _InitialiseFirstValue := function(generators, u, k, results, last)
   local l, #temporary look up variable
-        temp_ds, #temporary data structure place holder
+        ds, #temporary data structure place holder
         i; #temporary loop variable
 
   for i in [1 .. k] do
@@ -66,14 +82,13 @@ _InitialiseFirstValue := function(generators, u, k, results, last)
     l := _Get(results, generators[i]);
 
     if l = fail then
-      temp_ds := _NewDataStructure(generators[i], i, i, u.value, u.value, fail, k, 1);
-      last.next := temp_ds.value;
-      last := temp_ds;
+      ds := _NewDataStructure(generators[i], i, i, u.value, u.value, fail, k, 1);
+      last.next := ds.value;
+      last := ds;
       u.right[i] := last.value;
       u.rightFlag[i] := true;
       u.left[i] := last.value;
-
-      _Add(results, temp_ds.value, temp_ds);
+      _Add(results, ds.value, ds);
 
     else
       u.right[i] := 1;
@@ -95,22 +110,19 @@ end;
 _ApplyGenerators := function(generators, i, u, results, last, k, queues)
   local l, b, s, r, c, t, #temporary variables used in loops defined by paper
         v_ua, #temporary product of multiplication v(ua)
-        temp_ds, #temporary data structure to hold new values
         bw; #Bucket number for w
 
   b := u.first;
   s := _Get(results, u.suffix);
   bw := i; #This may be updated in the future
-
   if s.rightFlag[i] = false then #not reduced
-    r := s.right[i]; #find the right hand part eg for ua find u
+    r := _Get(results, s.right[i]); #find the right hand part eg for ua find u
     if r.length = 0 then #if r is the empty word
-      s.right[i] := b;
+      s.right[i] := u.right[b];
     else #if not the empty word
       c := r.last;
-      t := _Get(results, r.right[i]);
       #p(p(bt)c)
-      s.right[i] := _Get(results, t.left[b]).right[c];
+      s.right[i] := _Get(results, r.left[b]).right[c];
     fi;
   else #if it is already reduced
     v_ua := u.value * generators[i];
@@ -121,12 +133,14 @@ _ApplyGenerators := function(generators, i, u, results, last, k, queues)
     else #if l = fail
       #Store the element in the last datastructure, but add the entire
       #datastrcture to the queue
-      temp_ds := _NewDataStructure(v_ua, b, i, u.value, s.right[i], fail, k, u.length + 1);
-      last.next := temp_ds.value;
+      last.next := v_ua;
+      u.next := v_ua;
       u.right[i] := last.next;
       u.rightFlag[i] := true;
-      _AddQueue(queues, bw, temp_ds);
-      last := temp_ds;
+      #This has to be done in place
+      _RenewDS(last, v_ua, b, i, u.value, s.right[i], fail, k, u.length + 1);
+      #But this can't be done in place
+      _AddQueue(queues, bw, _Copy(last));
     fi;
   fi;
 end;
@@ -167,7 +181,7 @@ InstallGlobalFunction(FroidurePin, function(generators)
         last, #The final elemement in our list of generators
         currentLength, #the current length of ??
         k, #the number of generators we have received
-        i, p, #temporary variables used in loops defined by paper
+        j, p, l,#temporary variables used in loops defined by paper
         results,
         queue; #queue after ApplyGenerators
 
@@ -189,37 +203,43 @@ InstallGlobalFunction(FroidurePin, function(generators)
   repeat
     #In this part we compute ua_i
     while u <> fail and (u.length = currentLength) do
-      for i in [1 .. k] do
+      for j in [1 .. k] do
         #Add to position i in our queue
         #This gives each index in the queue a list of values
         #ProcessQueues does care about the order at least if we want it done
         #concurrently
-        _ApplyGenerators(generators, i, u, results, last, k, queue);
+        _ApplyGenerators(generators, j, u, results, last, k, queue);
       od;
       u := _Get(results, u.next);
     od;
-
-    for i in [1 .. k] do
-      _ProcessQueues(queue, results, i);
-    od;
-
     u := v;
+
+
+    for j in [1 .. k] do
+      _ProcessQueues(queue, results, j);
+    od;
 
     #For whatever reason this part isn't given a name in the paper,
     #I have decided to replicated that here.
-    while u <> fail and (u.length = currentLength) do
+    #This part generates the left graph
+    while u <> fail do
       p := _Get(results, u.prefix);
 
-      for i in [1 .. k] do
-        u.left[i] := _Get(results, p.left[i]).right[u.last];
+      #For every generator
+      for j in [1 .. k] do
+        l := _Get(results, p.left[j]);
+        if l = fail or l = 0 then
+          u.left[j] := u.right[u.last];
+        else
+          u.left[j] := _Get(results, p.left[j]).right[u.last];
+        fi;
       od;
-
       u := _Get(results, u.next);
     od;
 
     v := u;
     currentLength := currentLength + 1;
-  until u = last or u = fail;
+  until u = fail;
 
   return results;
 end);
