@@ -30,6 +30,12 @@ _Add := function(ds, key, value)
   AddDictionary(ds, key, value);
 end;
 
+#Concurrency helper functions
+_RunConcurrent := function(tasks)
+  #Since we do everything in place we can do "cheats" like this
+  WaitTask(tasks);
+end;
+
 ###
 # Data structure for the entry into the output results for each element
 ###
@@ -143,6 +149,7 @@ _ApplyGenerators := function(generators, i, u, results, last, k, queues)
       _AddQueue(queues, bw, _Copy(last));
     fi;
   fi;
+  return 0;
 end;
 
 ###
@@ -170,6 +177,19 @@ _ProcessQueues := function(queue, results, bw)
       _Add(results, v_wa.value, v_wa);
     fi;
   od;
+  return 0;
+end;
+
+
+_DevelopLeft := function(results, p, u, j )
+  local l;
+  l := _Get(results, p.left[j]);
+  if l = fail or l = 0 then
+    u.left[j] := u.right[u.last];
+  else
+    u.left[j] := _Get(results, p.left[j]).right[u.last];
+  fi;
+  return 0;
 end;
 
 ###
@@ -181,8 +201,9 @@ InstallGlobalFunction(FroidurePin, function(generators)
         last, #The final elemement in our list of generators
         currentLength, #the current length of ??
         k, #the number of generators we have received
-        j, p, l,#temporary variables used in loops defined by paper
+        j, p,#temporary variables used in loops defined by paper
         results,
+        tasks,
         queue; #queue after ApplyGenerators
 
   #Initialisation
@@ -194,6 +215,7 @@ InstallGlobalFunction(FroidurePin, function(generators)
   last := u;
   currentLength := 1;
   results := _CreateResults(u);
+  tasks := []; #This is used to hold the next set of tasks to avoid race conditions
 
   #Add values in generator to results
   _InitialiseFirstValue(generators, u, k, results, last);
@@ -204,11 +226,7 @@ InstallGlobalFunction(FroidurePin, function(generators)
     #In this part we compute ua_i
     while u <> fail and (u.length = currentLength) do
       for j in [1 .. k] do
-        #Add to position i in our queue
-        #This gives each index in the queue a list of values
-        #ProcessQueues does care about the order at least if we want it done
-        #concurrently
-        _ApplyGenerators(generators, j, u, results, last, k, queue);
+        RunTask(_ApplyGenerators(generators, j, u, results, last, k, queue));
       od;
       u := _Get(results, u.next);
     od;
@@ -216,7 +234,7 @@ InstallGlobalFunction(FroidurePin, function(generators)
 
 
     for j in [1 .. k] do
-      _ProcessQueues(queue, results, j);
+      RunTask(_ProcessQueues(queue, results, j));
     od;
 
     #For whatever reason this part isn't given a name in the paper,
@@ -227,12 +245,7 @@ InstallGlobalFunction(FroidurePin, function(generators)
 
       #For every generator
       for j in [1 .. k] do
-        l := _Get(results, p.left[j]);
-        if l = fail or l = 0 then
-          u.left[j] := u.right[u.last];
-        else
-          u.left[j] := _Get(results, p.left[j]).right[u.last];
-        fi;
+        RunTask(_DevelopLeft(results, p, u, j));
       od;
       u := _Get(results, u.next);
     od;
