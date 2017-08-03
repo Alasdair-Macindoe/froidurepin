@@ -117,7 +117,6 @@ _ApplyGenerators := function(generators, i, u, results, last, k, queues)
   local l, b, s, r, c, t, #temporary variables used in loops defined by paper
         v_ua, #temporary product of multiplication v(ua)
         bw; #Bucket number for w
-
   b := u.first;
   s := _Get(results, u.suffix);
   bw := i; #This may be updated in the future

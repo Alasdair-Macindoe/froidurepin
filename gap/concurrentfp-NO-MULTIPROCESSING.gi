@@ -1,7 +1,6 @@
 ###
 # Data structure for the queue output by ApplyGenerators
 ###
-
 _CreateQueue := function(buckets)
   local queue, i;
   queue := [];
@@ -18,30 +17,56 @@ end;
 ###
 # Data structure and methods for the output results
 ###
-_CreateResults := function(u)
-  return NewDictionary(u, true);
+_CreateResults := function()
+  return [];
 end;
 
 _Get := function(ds, value)
-  return LookupDictionary(ds, value);
+  local i;
+  for i in [1 .. Length(ds)] do
+    if value = ds[i].value then
+      return ds[i];
+    fi;
+  od;
+  return fail;
 end;
 
-_Add := function(ds, key, value)
-  AddDictionary(ds, key, value);
+_Add := function(ds, value)
+  Add(ds, value);
+end;
+
+_Search := function(value, results, bucket)
+  local l, i;
+  l := _Get(results, value);
+  if l <> fail then
+    return l;
+  fi;
+  for i in [1 .. Length(bucket)] do
+    if bucket[i] <> fail and bucket[i].value = value then
+      return bucket[i];
+    fi;
+  od;
+  return fail;
 end;
 
 ###
 # Data structure for the entry into the output results for each element
 ###
 #Recall everyword is a produced by u * a = v
-_NewDataStructure := function(v, f, l, p, s, n, k, len)
+_NewResultsDataStructure := function(v, f, l, p, s, k, len)
   return rec(
-        value := v, #The value of this entry
+        value := v, #The value of this word, eg this word
+
+        #First and last are integers referring to the generator
         first := f, #the first letter of this word
         last := l, #the last letter of this word
+
+        #Prefix and Suffix are the words that produce this word
+        #These are fail if it is produced by just a generator ie it is a generator
+        #eg for f = a, and w = ua then p = u
         prefix := p, #the prefix of this word
         suffix := s, #the suffix of this word
-        next := n, #the successor of this element
+
         right := [1 .. k] * 0, # the value of p(ua) for all a in generators
         rightFlag := [1 .. k] * 0, #flags for reduced or not for above
         left := [1 .. k] * 0,
@@ -50,55 +75,28 @@ _NewDataStructure := function(v, f, l, p, s, n, k, len)
         );
 end;
 
-_Copy := function(ds)
-  return _NewDataStructure(ds.value, ds.first, ds.last, ds.prefix, ds.suffix, ds.next, Length(ds.right), ds.length);
+_DefaultDS := function(value, i, k)
+  return _NewResultsDataStructure(value, i, i, fail, fail, k, 1);
 end;
 
-_RenewDS := function(ds, v, f, l, p, s, n, k, len)
-  ds.value := v;
-  ds.first := f;
-  ds.last := l;
-  ds.prefix := p;
-  ds.suffix := s;
-  ds.next := n;
-  ds.right := [1 .. k] *0;
-  ds.rightFlag := [1 .. k] *0;
-  ds.left := [1 .. k] * 0;
-  ds.length := len;
+_GetWord := function(YjKj, a)
+  if YjKj.suffix = fail then
+    return a * a;
+  fi;
+  return YjKj * a;
 end;
 
-###
-# Method required to add the generators to the data structure for the output
-# Whilst this is not in the paper this is required for the algorthim to
-# work programmatically.
-###
-_InitialiseFirstValue := function(generators, u, k, results, last)
-  local l, #temporary look up variable
-        ds, #temporary data structure place holder
-        i; #temporary loop variable
 
-  for i in [1 .. k] do
 
-    l := _Get(results, generators[i]);
+#Generating set is traditionally refered to as A
+_InitialiseResults := function(results, A)
+  local i, args;
+  args := Length(A);
 
-    if l = fail then
-      ds := _NewDataStructure(generators[i], i, i, u.value, u.value, fail, k, 1);
-      last.next := ds.value;
-      last := ds;
-      u.right[i] := last.value;
-      u.rightFlag[i] := true;
-      u.left[i] := last.value;
-      _Add(results, ds.value, ds);
-
-    else
-      u.right[i] := 1;
-      u.rightFlag[i] := false;
-    fi;
-
+  for i in [1 .. args] do
+    _Add(results, _DefaultDS(A[i], i, args));
   od;
-
 end;
-
 
 ###
 # This is the ApplyGenerators method as defined by the paper on concurrent
@@ -107,42 +105,40 @@ end;
 # element multiplied by each generator and checks to see if it exists in the
 # output data structure.
 ###
-_ApplyGenerators := function(generators, i, u, results, last, k, queues)
-  local l, b, s, r, c, t, #temporary variables used in loops defined by paper
-        v_ua, #temporary product of multiplication v(ua)
-        bw; #Bucket number for w
+_ApplyGenerators := function(A, Y, finish, start, queues, j, K, currentLength)
+  local b, #Let b be the bucket number
+        i,
+        s, #temporary suffix holder
+        w, #temporary word holder
+        l, #temporary look up holder
+        ds, #temporary data structure
+        number_gens,
+        currentWord;
+  #Y can be thought of as results[start:finish]
+  b := j; #For now the bucket is the job number. Avoids concurrency issues.
+  number_gens := Length(A);
+  K := K - 1; #K tell us how many word into our possible group we are
+  currentWord := Y[start + K];
 
-  b := u.first;
-  s := _Get(results, u.suffix);
-  bw := i; #This may be updated in the future
-  if s.rightFlag[i] = false then #not reduced
-    r := _Get(results, s.right[i]); #find the right hand part eg for ua find u
-    if r.length = 0 then #if r is the empty word
-      s.right[i] := u.right[b];
-    else #if not the empty word
-      c := r.last;
-      #p(p(bt)c)
-      s.right[i] := _Get(results, r.left[b]).right[c];
-    fi;
-  else #if it is already reduced
-    v_ua := u.value * generators[i];
-    l := _Get(results, v_ua); #Look up in our results to see if it exist
-    if l <> fail then
-      u.right[i] := l.value;
-      u.rightFlag[i] := false;
-    else #if l = fail
-      #Store the element in the last datastructure, but add the entire
-      #datastrcture to the queue
-      last.next := v_ua;
-      u.next := v_ua;
-      u.right[i] := last.next;
-      u.rightFlag[i] := true;
-      #This has to be done in place
-      _RenewDS(last, v_ua, b, i, u.value, s.right[i], fail, k, u.length + 1);
-      #But this can't be done in place
-      _AddQueue(queues, bw, _Copy(last));
-    fi;
-  fi;
+  #(finish - start) is |Yj|
+  while K <= (finish - start) and currentWord.length = currentLength do
+    currentWord := Y[start + K];
+    #for a in A
+    for i in [1 .. number_gens] do
+      w := currentWord.value * A[i];
+      l := _Search(w, Y, queues[b]);
+
+      if l <> fail then #w = v(y) for some y
+        currentWord.right[i] := l.value;
+        currentWord.rightFlag[i] := true;
+      else
+        ds := _NewResultsDataStructure(w, currentWord.first, i, currentWord.value, A[i], Length(A), currentWord.length + 1);
+        _AddQueue(queues, b, ds);
+      fi;
+    od;
+    K := K + 1;
+  od;
+  return K;
 end;
 
 ###
@@ -152,94 +148,76 @@ end;
 # If they are new then they get added to the output data structure, otherwise
 # that data structure is updated to note a reduction
 ###
-_ProcessQueues := function(queue, results, bw)
-  local queue_length,
-        i,
-        l,
-        v_wa;
+_ProcessQueues := function(queues, results, bw)
+  local i, #Loop index
+        l, #temporary look up
+        w, #if word = wa then this is the w part
+        word; #Temporary word holder
 
-  queue_length := Length(queue[bw]);
-  for i in [1 .. queue_length] do
-    v_wa := queue[bw][i];
-    l := _Get(results, v_wa.value);
+  #For this bucket
+  for i in [1..Length(queues[bw])] do
+    word := queues[bw][i];
+    l := _Get(results, word);
 
     if l <> fail then
-      l.right[l.last] := v_wa.value;
-      l.rightFlag[l.last] := true;
+      l.right[word.last] := word.value;
+      l.rightFlag[word.last] := true;
     else
-      _Add(results, v_wa.value, v_wa);
+      _Add(results, word);
     fi;
   od;
+
 end;
 
 ###
 # Main entry point for the program
+# This part assumes the minimal snapshot of (A, A, 1)
+# Note: In this program we do not have a phi method. It is a parameter in the
+# datastructure.
 ###
-InstallGlobalFunction(FroidurePin-NO-MULTIPROCESSING, function(generators)
-  local u, #current element in our universe
-        v, # minimal element of currentLength
-        last, #The final elemement in our list of generators
-        currentLength, #the current length of ??
-        k, #the number of generators we have received
-        j, p, l,#temporary variables used in loops defined by paper
-        results,
-        queue; #queue after ApplyGenerators
-
-  #Initialisation
-  k := Length(generators);
-  #This must have an appropriate amount of buckets to begin with
-  queue := _CreateQueue(k);
-  #Special case first entry
-  u := _NewDataStructure(generators[1], 0, 0, fail, fail, fail, k, 1);
-  last := u;
-  currentLength := 1;
-  results := _CreateResults(u);
-
-  #Add values in generator to results
-  _InitialiseFirstValue(generators, u, k, results, last);
-  u := _Get(results, generators[1]);
-  v := u;
-
-  repeat
-    #In this part we compute ua_i
-    while u <> fail and (u.length = currentLength) do
-      for j in [1 .. k] do
-        #Add to position i in our queue
-        #This gives each index in the queue a list of values
-        #ProcessQueues does care about the order at least if we want it done
-        #concurrently
-        _ApplyGenerators(generators, j, u, results, last, k, queue);
-      od;
-      u := _Get(results, u.next);
-    od;
-    u := v;
+InstallGlobalFunction(FroidurePin_NO_MULTIPROCESSING, function(generators)
+  local K, #K refers to K_j from the paper, but this is the minimal entry, thus
+           #is K := 1
+        currentLength, #This is the currentLength of words we are computing,
+                       #In this entry it is 1 since we only have generators.
+        j, #This is a holder for the job number
+        jobs, #This is the total number of jobs we can have
+        queues, #This the holder for the output from ApplyGenerators
+        results, #This is the holder of reduced words.
+        start, finish; #These are the frontier of our search
 
 
-    for j in [1 .. k] do
-      _ProcessQueues(queue, results, j);
+  #Initialise data structures
+  currentLength := 1; #Since we are starting with only generators
+  K := 1; #K is 1 in this entry
+  jobs := 1; #For now let their be 1 job.
+  results := _CreateResults(); #Results is Y our set of reduced words
+  start := 1;
+  finish := Length(generators);
+
+  _InitialiseResults(results, generators);
+
+  while K <= (finish - start) and currentLength <= 500 do #temporary to prevent infinite loops
+    #We do this here to ensure the queues are emptied every loop
+    queues := _CreateQueue(jobs); #For now assume that the number of queues is equal to the number of jobs
+
+    for j in [1 .. jobs] do
+      K := _ApplyGenerators(generators, results, finish, start, queues, j, K, currentLength);
     od;
 
-    #For whatever reason this part isn't given a name in the paper,
-    #I have decided to replicated that here.
-    #This part generates the left graph
-    while u <> fail do
-      p := _Get(results, u.prefix);
-
-      #For every generator
-      for j in [1 .. k] do
-        l := _Get(results, p.left[j]);
-        if l = fail or l = 0 then
-          u.left[j] := u.right[u.last];
-        else
-          u.left[j] := _Get(results, p.left[j]).right[u.last];
-        fi;
-      od;
-      u := _Get(results, u.next);
+    for j in [1 .. jobs] do
+      _ProcessQueues(queues, results, j);
     od;
 
-    v := u;
+    #This is used to find those additional values
+    if K >= (finish - start) then
+      start := finish + 1;
+      finish := Length(results);
+      K := 1;
+    fi;
+
     currentLength := currentLength + 1;
-  until u = fail;
+  od;
 
   return results;
 end);
