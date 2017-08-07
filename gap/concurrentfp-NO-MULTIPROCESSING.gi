@@ -70,7 +70,6 @@ _NewResultsDataStructure := function(v, f, l, p, s, k, len)
         right := [1 .. k] * 0, # the value of p(ua) for all a in generators
         rightFlag := [1 .. k] * 0, #flags for reduced or not for above
         left := [1 .. k] * 0,
-        leftFlag := [1 .. k] * 0,
         length := len #length of u
         );
 end;
@@ -86,8 +85,6 @@ _GetWord := function(YjKj, a)
   return YjKj * a;
 end;
 
-
-
 #Generating set is traditionally refered to as A
 _InitialiseResults := function(results, A)
   local i, args;
@@ -96,6 +93,7 @@ _InitialiseResults := function(results, A)
   for i in [1 .. args] do
     _Add(results, _DefaultDS(A[i], i, args));
   od;
+
 end;
 
 ###
@@ -109,6 +107,7 @@ _ApplyGenerators := function(A, Y, finish, start, queues, j, K, currentLength)
   local b, #Let b be the bucket number
         i,
         s, #temporary suffix holder
+        r,
         w, #temporary word holder
         l, #temporary look up holder
         ds, #temporary data structure
@@ -128,11 +127,20 @@ _ApplyGenerators := function(A, Y, finish, start, queues, j, K, currentLength)
       w := currentWord.value * A[i];
       l := _Search(w, Y, queues[b]);
 
+      if currentWord.suffix <> fail then
+        s := _Get(Y, currentWord.suffix);
+        if s.rightFlag[i] = false then
+          r := _Get(A, s.right[i]);
+          s.right[i] := _Get(Y, r.left[currentWord.first]).right[r.last];
+        fi;
+      fi;
       if l <> fail then #w = v(y) for some y
         currentWord.right[i] := l.value;
-        currentWord.rightFlag[i] := true;
+        currentWord.rightFlag[i] := false;
       else
         ds := _NewResultsDataStructure(w, currentWord.first, i, currentWord.value, A[i], Length(A), currentWord.length + 1);
+        currentWord.right[i] := ds.value;
+        currentWord.rightFlag[i] := true;
         _AddQueue(queues, b, ds);
       fi;
     od;
@@ -161,12 +169,28 @@ _ProcessQueues := function(queues, results, bw)
 
     if l <> fail then
       l.right[word.last] := word.value;
-      l.rightFlag[word.last] := true;
+      l.rightFlag[word.last] := false;
     else
       _Add(results, word);
     fi;
   od;
+end;
 
+_DevelopLeft := function(Y, A)
+  local i, a, currentWord, p, r;
+  for i in [1 .. Length(Y)] do
+    #for a in A
+    for a in [1 .. Length(A)] do
+      currentWord := Y[i];
+      if currentWord.prefix = fail then #This makes it a generator
+        currentWord.left[a] := A[a];
+      else #it is the normal case
+        p := _Get(Y, currentWord.prefix);
+        r := _Get(Y, p.left[a]);
+        currentWord.left[a] := r.right[currentWord.last];
+      fi;
+    od;
+  od;
 end;
 
 ###
@@ -197,7 +221,7 @@ InstallGlobalFunction(FroidurePin_NO_MULTIPROCESSING, function(generators)
 
   _InitialiseResults(results, generators);
 
-  while K <= (finish - start) and currentLength <= 500 do #temporary to prevent infinite loops
+  while K <= (finish - start + 1) and currentLength <= 500 do #temporary to prevent infinite loops
     #We do this here to ensure the queues are emptied every loop
     queues := _CreateQueue(jobs); #For now assume that the number of queues is equal to the number of jobs
 
@@ -209,7 +233,11 @@ InstallGlobalFunction(FroidurePin_NO_MULTIPROCESSING, function(generators)
       _ProcessQueues(queues, results, j);
     od;
 
-    #This is used to find those additional values
+    for j in [1 .. jobs] do
+      _DevelopLeft(results, generators);
+    od;
+
+    #This is used to find those additional values that seem to not appear
     if K >= (finish - start) then
       start := finish + 1;
       finish := Length(results);
@@ -218,6 +246,5 @@ InstallGlobalFunction(FroidurePin_NO_MULTIPROCESSING, function(generators)
 
     currentLength := currentLength + 1;
   od;
-
   return results;
 end);
