@@ -127,13 +127,13 @@ _ApplyGenerators := function(A, Y, finish, start, queues, j, K, currentLength)
       w := currentWord.value * A[i];
       l := _Search(w, Y, queues[b]);
 
-      if currentWord.suffix <> fail then
-        s := _Get(Y, currentWord.suffix);
-        if s.rightFlag[i] = false then
-          r := _Get(A, s.right[i]);
-          s.right[i] := _Get(Y, r.left[currentWord.first]).right[r.last];
-        fi;
-      fi;
+      #if currentWord.suffix <> fail then
+      #  s := _Get(Y, currentWord.suffix);
+      #  if s.rightFlag[i] = false then
+      #    r := _Get(A, s.right[i]);
+      #    s.right[i] := _Get(Y, r.left[currentWord.first]).right[r.last];
+      #  fi;
+      #fi;
       if l <> fail then #w = v(y) for some y
         currentWord.right[i] := l.value;
         currentWord.rightFlag[i] := false;
