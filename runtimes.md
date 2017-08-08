@@ -12,11 +12,11 @@ Additionally please refer to `versions.md` for the various version of the implem
 **OS**: Fedora 24.
 
 ## Machine 2
-**Processor**: Intel Core(TM) i5-3570k 4GHz. 4 cores, 4 threads.
+**Processor**: Intel Core(TM) i5 6500 3.2GHz Quad Core.
 
-**Memory**: 16 GB DDR 3.
+**Memory**: 8GB (unknown type - assumed DDR3).
 
-**OS**: Windows 10.
+**OS**: Fedora 25.
 
 # Runtimes
 
