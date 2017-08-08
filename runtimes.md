@@ -30,7 +30,8 @@ Data | Machine | Cores/Threads | R1 | R2 | R3 | Avg |
 :---:|:-------:|:-------------:|:---:|:---:|:---:|:---:|
 1    | 1       | 1/1             | 30114  | 31255  | 31170  | 30846  |
 1    | 1       | 2/4             | 30556  | 29732  | 29660  | 29983 |
+2    | 1       | 1/1             | 1724724 | 1731895 | 2142796 | 1866471 |
 
 
 ## Notes
-Unsurprisingly running a non-concurrent algorithm with more threads has no effect. There *could* be a small effect from the now threaded garbage collector which might be experimented on more later. 
+Unsurprisingly running a non-concurrent algorithm with more threads has no effect. There *could* be a small effect from the now threaded garbage collector which might be experimented on more later.

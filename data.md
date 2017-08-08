@@ -23,9 +23,13 @@ Standard input of a small size, generally used to ensure that everything it work
 ## 2
 
 ```
-g := [];;
+g := [ Transformation( [ 1, 3, 2, 1, 4 ] ), Transformation( [ 2, 5, 1, 2, 5, 1 ] ), Transformation( [ 2, 6, 4, 3, 4, 3 ] ),
+  Transformation( [ 4, 5, 1, 5, 4, 1 ] ), Transformation( [ 4, 5, 2, 3, 6, 2 ] ), Transformation( [ 5, 6, 4, 3, 3, 2 ] ),
+  Transformation( [ 6, 1, 4, 3, 2, 3 ] ), Transformation( [ 6, 6, 2, 1, 4, 3 ] ) ];;
 ```
 
 ### Reason
 
-Sample Reason 2
+Size: 18846
+
+Standard input of medium size, used to get some data on scaling. 

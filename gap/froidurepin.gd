@@ -2,4 +2,5 @@ DeclareGlobalFunction("FroidurePin");
 DeclareGlobalFunction("SequentialFroidurePin");
 DeclareGlobalFunction("SimplifiedFroidurePin");
 DeclareGlobalFunction("NaiveSemiGroupEnumeration");
-DeclareGlobalFunction("FroidurePin_NO_MULTIPROCESSING");
+DeclareGlobalFunction("FroidurePin_V1");
+DeclareGlobalFunction("FroidurePin_V2");
