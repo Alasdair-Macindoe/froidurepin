@@ -22,7 +22,7 @@ Additionally please refer to `versions.md` for the various version of the implem
 
 **Note**: All runtimes are in msec. These are calculated using GAPs built-in [Runtime](https://www.gap-system.org/Manuals/doc/ref/chap7.html#X792BA9A67E64CDED) function.  This is inherently imperfect because the method itself takes time to run.
 
-If core limitations were necessary they were done so using HPC-GAP's launch parameters eg `-P x`.
+If core limitations were necessary they were done so using HPC-GAP's launch parameters eg `-P x` or `-P 1 -S`.
 
 ## Implementation Version 1
 
@@ -31,7 +31,11 @@ Data | Machine | Cores/Threads | R1 | R2 | R3 | Avg |
 1    | 1       | 1/1             | 30114  | 31255  | 31170  | 30846  |
 1    | 1       | 2/4             | 30556  | 29732  | 29660  | 29983 |
 2    | 1       | 1/1             | 1724724 | 1731895 | 2142796 | 1866471 |
+3    | 1       | 1/1             | 340253  | 329592 | 326096 | 331980 |
+4    | 1       | 1/1             |
 
 
 ## Notes
-Unsurprisingly running a non-concurrent algorithm with more threads has no effect. There *could* be a small effect from the now threaded garbage collector which might be experimented on more later.
+Unsurprisingly running a non-concurrent algorithm with more threads has no effect. There *could* be a small effect from the now threaded garbage collector which *might* be experimented on more later.
+
+The interesting part here is that data source 3 took 10x as long as data source 1 despite being approximately the same size.

@@ -103,36 +103,33 @@ end;
 # element multiplied by each generator and checks to see if it exists in the
 # output data structure.
 ###
-_ApplyGenerators := function(A, Y, finish, start, queues, j, K, currentLength)
-  local b, #Let b be the bucket number
-        i,
-        s, #temporary suffix holder
-        r,
-        w, #temporary word holder
-        l, #temporary look up holder
-        ds, #temporary data structure
-        number_gens,
-        currentWord;
-  #Y can be thought of as results[start:finish]
-  b := j; #For now the bucket is the job number. Avoids concurrency issues.
-  number_gens := Length(A);
-  K := K - 1; #K tell us how many word into our possible group we are
-  currentWord := Y[start + K];
-
-  #(finish - start) is |Yj|
-  while K <= (finish - start) and currentWord.length = currentLength do
-    currentWord := Y[start + K];
+_ApplyGenerators := function(A, Y, start, step, queues, K, currentLength, j)
+  local offset, currentWord, i, w, l, ds, b;
+  K := K - 1;
+  b := j; #bucket = job number
+  #For all the words in our range
+  for offset in [start .. start + step] do
+    currentWord := Y[offset];
+    if currentWord.length <> currentLength then
+      return offset - start;
+    fi;
     #for a in A
-    for i in [1 .. number_gens] do
+    for i in [1 .. Length(A)] do
       w := currentWord.value * A[i];
       l := _Search(w, Y, queues[b]);
+      if w = Transformation( [ 5, 3, 2, 5, 5 ] ) then
+        Print("Found w: ", w, "\n");
+        Print("Produced by: ", currentWord.value, "\n");
+        Print("and: ", A[i], "\n");
+      fi;
 
       #if currentWord.suffix <> fail then
-      #  s := _Get(Y, currentWord.suffix);
-      #  if s.rightFlag[i] = false then
-      #    r := _Get(A, s.right[i]);
-      #    s.right[i] := _Get(Y, r.left[currentWord.first]).right[r.last];
-      #  fi;
+        #s := _Get(Y, currentWord.suffix);
+        #  if s.rightFlag[i] = false then
+        #    Print("Searching for: ", s.right[i], "\n");
+        #    r := _Get(Y, s.right[i]);
+        #    s.right[i] := _Get(Y, r.left[currentWord.first]).right[r.last];
+       #  fi;
       #fi;
       if l <> fail then #w = v(y) for some y
         currentWord.right[i] := l.value;
@@ -144,9 +141,8 @@ _ApplyGenerators := function(A, Y, finish, start, queues, j, K, currentLength)
         _AddQueue(queues, b, ds);
       fi;
     od;
-    K := K + 1;
   od;
-  return K;
+  return K + offset;
 end;
 
 ###
@@ -176,22 +172,27 @@ _ProcessQueues := function(queues, results, bw)
   od;
 end;
 
-_DevelopLeft := function(Y, A)
-  local i, a, currentWord, p, r;
-  for i in [1 .. Length(Y)] do
-    #for a in A
-    for a in [1 .. Length(A)] do
-      currentWord := Y[i];
-      if currentWord.prefix = fail then #This makes it a generator
-        currentWord.left[a] := A[a];
-      else #it is the normal case
+_DevelopLeft := function(Y, A, start, step)
+  local offset, i, currentWord, p, r;
+  offset := 0;
+  #Iterate over a a range of results Y[start] to Y[finish]
+  while (offset < step) do
+    currentWord := Y[start + offset];
+    #for each a in A
+    for i in [1 .. Length(A)] do
+      if currentWord.prefix = fail then #This is a generator value
+        currentWord.left[i] := A[i];
+      else
         p := _Get(Y, currentWord.prefix);
-        r := _Get(Y, p.left[a]);
-        currentWord.left[a] := r.right[currentWord.last];
+        r := _Get(Y, p.left[i]);
+        currentWord.left[i] := r.right[currentWord.last];
       fi;
     od;
+    offset := offset + 1;
   od;
+  return 0;
 end;
+
 
 ###
 # Main entry point for the program
@@ -208,6 +209,10 @@ InstallGlobalFunction(FroidurePin_V1, function(generators)
         jobs, #This is the total number of jobs we can have
         queues, #This the holder for the output from ApplyGenerators
         results, #This is the holder of reduced words.
+        step,
+        l,
+        lengthResults,
+        overflow,
         start, finish; #These are the frontier of our search
 
 
@@ -224,17 +229,27 @@ InstallGlobalFunction(FroidurePin_V1, function(generators)
   while K <= (finish - start + 1) and currentLength <= 500 do #temporary to prevent infinite loops
     #We do this here to ensure the queues are emptied every loop
     queues := _CreateQueue(jobs); #For now assume that the number of queues is equal to the number of jobs
-
+    l := Length(results);
     for j in [1 .. jobs] do
-      K := _ApplyGenerators(generators, results, finish, start, queues, j, K, currentLength);
+      K := _ApplyGenerators(generators, results, start, finish - start, queues, K, currentLength, j);
     od;
-
     for j in [1 .. jobs] do
       _ProcessQueues(queues, results, j);
     od;
 
+    lengthResults := Length(results);
+    overflow := (lengthResults - start) mod jobs;
+    if overflow = 0 then
+      step := (lengthResults - start) / jobs;
+    else
+      step := (lengthResults - start - overflow) / jobs;
+    fi;
     for j in [1 .. jobs] do
-      _DevelopLeft(results, generators);
+      #Prevents overflow
+      if start + j*step > lengthResults then
+        step := lengthResults - j*step;
+      fi;
+      _DevelopLeft(results, generators, start, step);
     od;
 
     #This is used to find those additional values that seem to not appear
@@ -243,7 +258,7 @@ InstallGlobalFunction(FroidurePin_V1, function(generators)
       finish := Length(results);
       K := 1;
     fi;
-
+    Print(currentLength, "\n");
     currentLength := currentLength + 1;
   od;
   return results;
