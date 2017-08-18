@@ -47,3 +47,20 @@ If we have Y = [a, b] and our Queues Q = [ [c, d], [d]] then at the end of our t
 ## Develop Left
 
 Takes the new Y produced from MergeQueues and creates the left Cayley graph for any values that needs them. Nothing exceptionally special. No multiplications happen at this stage.
+
+# Version 1.1.x
+
+All of these Versions will use a bucket per generator in ApplyGenerators output and will give a concurrent processing unit to each generator. This means that each a in A will have its own processing unit for all the y in Y. Y will not be fragmented in 1.1.x. 
+
+## Version 1.1.1 - Tasks & Locking
+
+This version is an extension of Version 1. It has concurrency introduced using
+HPC-GAP's Task system and uses locking to allow us to maintain a 1-D array for our Y set (the set of reduced words).
+
+## Version 1.1.2 - Threads & Locking
+
+This is the same as Version 1.1 but uses HPC-GAP's Threads instead of Tasks.
+
+## Version 1.1.3 - Processes & Locking
+
+This uses Processes instead of Tasks or Threads as in 1.1 and 1.2 respectively.  
