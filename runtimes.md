@@ -12,11 +12,23 @@ Additionally please refer to `versions.md` for the various version of the implem
 **OS**: Fedora 24.
 
 ## Machine 2
-**Processor**: Intel Core(TM) i5 6500 3.2GHz Quad Core.
+**Processor**: 2x Intel(R) Xeon(R) E5-2640 v4 CPU
 
-**Memory**: 8GB (unknown type - assumed DDR3).
+**Memory**: 8 x 16GB DDR4 2400 MHz ECC.
 
-**OS**: Fedora 25.
+**OS**: Unknown.
+
+**Notes**: 'Cormac' research server.
+
+## Machine 3
+
+**Processor**: 2x AMD Opteron 6376 CPU
+
+**Memory**: 32 x 16GB PC3-12800 DDR3-1600Mhz ECC
+
+**OS**: Unknown.
+
+**Notes**: 'Lovelace' research server.
 
 # Runtimes
 
@@ -39,3 +51,10 @@ Data | Machine | Cores/Threads | R1 | R2 | R3 | Avg |
 Unsurprisingly running a non-concurrent algorithm with more threads has no effect. There *could* be a small effect from the now threaded garbage collector which *might* be experimented on more later.
 
 The interesting part here is that data source 3 took 10x as long as data source 1 despite being approximately the same size.
+
+
+## Implementation Version 1.1
+
+Data | Machine | Cores/Threads | R1 | R2 | R3 | Avg |
+:---:|:-------:|:-------------:|:---:|:---:|:---:|:---:|
+5    | 2       | 1             |

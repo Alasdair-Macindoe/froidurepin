@@ -106,12 +106,11 @@ end;
 ###
 _ApplyGenerators := function(A, Y, start, finish, queues, K, currentLength, j)
   local offset, currentWord, i, w, l, ds, b;
-  K := K - 1;
   b := j; #bucket = job number
   #For all the words in our range
   for offset in [start + K .. finish] do
     currentWord := Y[offset];
-    if currentWord.length <> currentLength then
+    if currentWord.length - currentLength > 0 then
       return offset - start;
     fi;
     #for a in A
@@ -191,7 +190,7 @@ _CalcStep := function(len, start, jobs)
   if overflow = 0 then
     return (len - start) / jobs;
   else
-    return Int(Ceil((len - start - overflow + 0.0) / jobs));
+    return Int(Ceil(Float((len - start) / jobs)));
   fi;
 end;
 ###
@@ -222,28 +221,28 @@ InstallGlobalFunction(FroidurePin_V1_1, function(generators)
   MainRegion := "MainSharedRegion";
   NewRegion(MainRegion);
   currentLength := 1; #Since we are starting with only generators
-  K := 1; #K is 1 in this entry
-  jobs := Length(generators); #For now let their be 1 job.
+  K := 0; #The paper uses K = 1 but I think that is unintuitive
+  jobs := Length(generators); #For now let teheir be 1 job.
   results := ShareObj(_CreateResults(MainRegion), MainRegion); #Results is Y our set of reduced words
   start := 1;
   finish := Length(generators);
   _InitialiseResults(results, generators, MainRegion);
   MakeImmutable(generators);
 
-  repeat#while K <= (finish - start) and K > 0 and currentLength <= 4 do #temporary to prevent infinite loops
+  repeat
     added := [];
     #We do this here to ensure the queues are emptied every loop
     queues := _CreateQueue(jobs, MainRegion); #For now assume that the number of queues is equal to the number of jobs
     lengthResults := Length(results);
     step := _CalcStep(lengthResults, start, jobs);
-    r := start;
+    r := start - 1;
     for j in [1 .. jobs] do
-      r := start + (j - 1)*step;
+      r := r + 1;
       if r + step > lengthResults then
         step := lengthResults - r;
-        r := Maximum(r - 1, start);
       fi;
       Add(added, DelayTask(_ApplyGenerators, generators, results, r, r + step, queues, K, currentLength, j));
+      r := r + step;
     od;
 
     #If we sum all the K values and that is less than our total length then we need to reloop
@@ -279,20 +278,14 @@ InstallGlobalFunction(FroidurePin_V1_1, function(generators)
     #for j in [1 .. Length(added)] do
     #  TaskResult(added[j]);
     #od;
-    #Print("For c: ", currentLength, "\n");
-    #Print("Start: ", start, "\n");
-    #Print("Finish: ", finish, "\n");
-    #Print("Length of results: ", Length(results), "\n");
-    #Print("K: ", K, "\n\n");
-    if Length(results) - start >= K then
+    if K >= (finish - start + 1) then
       start := finish + 1;
     fi;
-    K := 1;
+    K := 0;
     finish := Length(results);
 
-    Print(currentLength, "\n");
     currentLength := currentLength + 1;
-  until K > (finish - start + 1) or K <= 0 or currentLength >= 500; #od;
+  until K > (finish - start + 1) or currentLength >= 500; #od;
 
   return results;
 end);

@@ -328,4 +328,18 @@ g := [ IdentityTransformation, Transformation( [ 2, 3, 4, 5, 6, 1 ] ), Transform
 
 Size: 46656
 
-Large semigroup with few generators. 
+Large semigroup with few generators.
+
+## 5
+
+```
+g := [ Transformation( [ 1, 7, 5, 2, 2, 1, 6, 6 ] ), Transformation( [ 3, 2, 2, 5, 1, 6, 5 ] ), Transformation( [ 3, 2, 5, 2, 8, 4, 2, 1 ] ),
+  Transformation( [ 3, 3, 7, 1, 5, 2, 3, 3 ] ), Transformation( [ 5, 7, 6, 2, 3, 8, 8, 3 ] ), Transformation( [ 5, 8, 8, 4, 3, 7, 3, 1 ] ),
+  Transformation( [ 6, 6, 3, 3, 5, 4, 5, 4 ] ), Transformation( [ 8, 8, 7, 2, 3, 7, 8, 6 ] ) ];;
+```
+
+### Reason
+
+Size: 294691
+
+Larger semigroup that can be used to establish scalability. 
