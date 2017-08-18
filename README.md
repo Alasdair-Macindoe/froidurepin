@@ -10,6 +10,23 @@ Please place in the correct pkg folder such as either `gap/pkg` or `hpcgap/pkg`.
 
 Then you can load the package from within GAP by using `LoadPackage("froidurepin")`.
 
+For example (from gap root):
+
+```
+cd hpcgap/pkg
+git clone https://github.com/Alasdair-Macindoe/parallel-sgrp-gap froidurepin
+```
+
+# Testing
+
+From GAPROOT:
+
+```
+mv hpcgap/pkg/froidurepin/test.g .
+bin/gap.sh
+gap> Read("test.g");
+```
+
 # NOTE
 
-This is in **DEVELOPMENT** function name and parameters may change. 
+This is in **DEVELOPMENT** function name and parameters may change.
