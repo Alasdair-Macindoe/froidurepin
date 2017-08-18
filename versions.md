@@ -48,14 +48,17 @@ If we have Y = [a, b] and our Queues Q = [ [c, d], [d]] then at the end of our t
 
 Takes the new Y produced from MergeQueues and creates the left Cayley graph for any values that needs them. Nothing exceptionally special. No multiplications happen at this stage.
 
+## Jobs
+For this version the standard number of jobs (effectively how many fragements we take) is one per generator.
+
 # Version 1.1.x
 
-All of these Versions will use a bucket per generator in ApplyGenerators output and will give a concurrent processing unit to each generator. This means that each a in A will have its own processing unit for all the y in Y. Y will not be fragmented in 1.1.x. 
+All of these Versions will use a bucket per generator in ApplyGenerators output and will split fragment the known search space based upon two conditions: firstly how large our frontier is and how many jobs we have (which by default is the number of generators we are given).
 
 ## Version 1.1.1 - Tasks & Locking
 
 This version is an extension of Version 1. It has concurrency introduced using
-HPC-GAP's Task system and uses locking to allow us to maintain a 1-D array for our Y set (the set of reduced words).
+HPC-GAP's Task system and uses locking to allow us to maintain a 1-D array for our Y set (the set of reduced words). This is done using HPC-GAP's atomic types.
 
 ## Version 1.1.2 - Threads & Locking
 
