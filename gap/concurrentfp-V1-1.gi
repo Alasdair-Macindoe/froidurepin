@@ -263,21 +263,24 @@ InstallGlobalFunction(FroidurePin_V1_1, function(generators)
     od;
     added := [];
 
-    #Read opt results
     lengthResults := Length(results);
 
-    #step := _CalcStep(lengthResults, start, jobs);
-    #for j in [1 .. jobs] do
-      ##Prevents overflow
-      #if start + (j-1)*step > lengthResults then
-      #  step := lengthResults - (j-1)*step;
-      #fi;
-      #Add(added, DelayTask(_DevelopLeft, results, generators, start, step));
-    #od;
+    step := _CalcStep(lengthResults, start, jobs);
+    r := start - 1;
+    for j in [1 .. jobs] do
+      r := r + 1;
+      if r + step > lengthResults then
+        step := lengthResults - r;
+      fi;
+      Add(added, DelayTask(_DevelopLeft, results, generators, start, step));
+      r := r + step;
+    od;
 
-    #for j in [1 .. Length(added)] do
-    #  TaskResult(added[j]);
-    #od;
+    for j in [1 .. Length(added)] do
+      TaskResult(added[j]);
+    od;
+
+    #Adjustments
     if K >= (finish - start + 1) then
       start := finish + 1;
     fi;
