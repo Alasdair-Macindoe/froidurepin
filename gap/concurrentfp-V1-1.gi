@@ -32,6 +32,16 @@ _Get := function(ds, value)
   return fail;
 end;
 
+_Find := function(ds, value)
+  local i;
+  for i in [1 .. Length(ds)] do
+    if value = ds[i].value then
+      return i;
+    fi;
+  od;
+  return fail;
+end;
+
 _Add := function(ds, value)
   Add(ds, value);
 end;
@@ -68,9 +78,9 @@ _NewResultsDataStructure := function(v, f, l, p, s, k, len)
         prefix := p, #the prefix of this word
         suffix := s, #the suffix of this word
 
-        right := [1 .. k] * 0, # the value of p(ua) for all a in generators
-        rightFlag := [1 .. k] * 0, #flags for reduced or not for above
-        left := [1 .. k] * 0,
+        right := AtomicList([1 .. k] * 0), # the value of p(ua) for all a in generators
+        rightFlag := AtomicList([1 .. k] * 0), #flags for reduced or not for above
+        left := AtomicList([1 .. k] * 0),
         length := len #length of u
         ));
 end;
@@ -105,7 +115,7 @@ end;
 # output data structure.
 ###
 _ApplyGenerators := function(A, Y, start, finish, queues, K, currentLength, j)
-  local offset, currentWord, i, w, l, ds, b;
+  local offset, currentWord, i, w, l, ds, b, s, r, y;
   b := j; #bucket = job number
   #For all the words in our range
   for offset in [start + K .. finish] do
@@ -117,21 +127,23 @@ _ApplyGenerators := function(A, Y, start, finish, queues, K, currentLength, j)
     for i in [1 .. Length(A)] do
       w := currentWord.value * A[i];
       l := _Search(w, Y, queues[b]);
-      #if currentWord.suffix <> fail then
-        #s := _Get(Y, currentWord.suffix);
-        #  if s.rightFlag[i] = false then
-        #    Print("Searching for: ", s.right[i], "\n");
-        #    r := _Get(Y, s.right[i]);
-        #    s.right[i] := _Get(Y, r.left[currentWord.first]).right[r.last];
-       #  fi;
-      #fi;
+
+      if currentWord.suffix <> fail then
+        s := Y[_Find(Y, currentWord.suffix)];
+        if s.rightFlag[i] then
+          r := Y[_Find(Y, s.right[i])];
+          y := Y[_Find(Y, r.left[currentWord.first])];
+          #s.right[i] := y.right[r.last]; #THIS LINE IS THE PROBLEM
+         fi;
+      fi;
+
       if l <> fail then #w = v(y) for some y
         currentWord.right[i] := l.value;
-        currentWord.rightFlag[i] := false;
+        currentWord.rightFlag[i] := true;
       else
         ds := _NewResultsDataStructure(w, currentWord.first, i, currentWord.value, A[i], Length(A), currentLength + 1);
         currentWord.right[i] := ds.value;
-        currentWord.rightFlag[i] := true;
+        currentWord.rightFlag[i] := false;
         _AddQueue(queues, b, ds);
       fi;
     od;
@@ -222,7 +234,7 @@ InstallGlobalFunction(FroidurePin_V1_1, function(generators)
   NewRegion(MainRegion);
   currentLength := 1; #Since we are starting with only generators
   K := 0; #The paper uses K = 1 but I think that is unintuitive
-  jobs := Length(generators); #For now let teheir be 1 job.
+  jobs := Length(generators);
   results := ShareObj(_CreateResults(MainRegion), MainRegion); #Results is Y our set of reduced words
   start := 1;
   finish := Length(generators);

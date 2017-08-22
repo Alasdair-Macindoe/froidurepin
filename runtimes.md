@@ -40,10 +40,10 @@ If core limitations were necessary they were done so using HPC-GAP's launch para
 
 Data | Machine | Cores/Threads | Jobs | R1 | R2 | R3 | Avg |
 :---:|:-------:|:-------------:|:----:|:---:|:---:|:---:|:---:|
-1    | 1       | 1/1      | Standard |30114  | 31255  | 31170  | 30846  |
-1    | 1       | 2/4      | Standard |30556  | 29732  | 29660  | 29983 |
-2    | 1       | 1/1      | Standard |1724724 | 1731895 | 2142796 | 1866471 |
-3    | 1       | 1/1      | Standard |340253  | 329592 | 326096 | 331980 |
+1    | 1       | 1    | Standard |30114  | 31255  | 31170  | 30846  |
+1    | 1       | 2      | Standard |30556  | 29732  | 29660  | 29983 |
+2    | 1       | 1      | Standard |1724724 | 1731895 | 2142796 | 1866471 |
+3    | 1       | 1      | Standard |340253  | 329592 | 326096 | 331980 |
 
 
 ## Notes
@@ -56,4 +56,10 @@ The interesting part here is that data source 3 took 10x as long as data source 
 
 Data | Machine | Cores/Threads | Jobs | R1 | R2 | R3 | Avg |
 :---:|:-------:|:-------------:|:----:|:---:|:---:|:---:|:---:|
-5    | 2       | 1             |
+1    | 3       | 1             |  Standard | 11471 | 11264 | 11222 | 11319 |
+1    | 3       | 2  | Standard | 11664 | 12624 | 11960 | 11982 |
+1 | 3 | 4 | Standard | 11601 | 11660 | 12128 | 11796 |
+1 | 3 | 8 | Standard | 11522 | 11592 | 11727 | 11613 |
+1 | 3 | 64 | Standard | 11656 | 11754 | 11662 | 11690 |
+4 | 3 | 1 | Standard | 1954627 | 1909336 | 2805319 | 2223094 |
+4 | 3 | 2 | Standard | 1935117 | 1917083 | 2768690 | 2206963 |
