@@ -1,25 +1,24 @@
 ###
 # Data structure for the queue output by ApplyGenerators
 ###
-_CreateQueue := function(buckets, region)
+_CreateQueue := function(buckets)
   local queue, i;
   queue := [];
   for i in [1 .. buckets] do
-    Add(queue, AtomicList([]));
-    ShareObj(queue[i], region);
+    Add(queue, []);
   od;
   return queue;
 end;
 
-_AddQueue := function(queue, bucket, value)
-  Add(queue[bucket], value);
+_AddQueue := function(queue, value)
+  Add(queue, value);
 end;
 
 ###
 # Data structure and methods for the output results
 ###
-_CreateResults := function(region)
-  return ShareObj(AtomicList([]), region);
+_CreateResults := function()
+  return [];
 end;
 
 _Get := function(ds, value)
@@ -65,7 +64,7 @@ end;
 ###
 #Recall everyword is a produced by u * a = v
 _NewResultsDataStructure := function(v, f, l, p, s, k, len)
-  return AtomicRecord(rec(
+  return MakeReadOnly(rec(
         value := v, #The value of this word, eg this word TODO: Can this be immutable?
 
         #First and last are integers referring to the generator
@@ -78,9 +77,9 @@ _NewResultsDataStructure := function(v, f, l, p, s, k, len)
         prefix := p, #the prefix of this word
         suffix := s, #the suffix of this word
 
-        right := AtomicList([1 .. k] * 0), # the value of p(ua) for all a in generators
-        rightFlag := AtomicList([1 .. k] * 0), #flags for reduced or not for above
-        left := AtomicList([1 .. k] * 0),
+        right := [1 .. k] * 0, # the value of p(ua) for all a in generators
+        rightFlag := [1 .. k] * 0, #flags for reduced or not for above
+        left := [1 .. k] * 0,
         length := len #length of u
         ));
 end;
@@ -102,7 +101,7 @@ _InitialiseResults := function(results, A, region)
   args := Length(A);
 
   for i in [1 .. args] do
-    _Add(results, ShareObj(_DefaultDS(A[i], i, args), region));
+    _Add(results, _DefaultDS(A[i], i, args));
   od;
 
 end;
@@ -114,9 +113,8 @@ end;
 # element multiplied by each generator and checks to see if it exists in the
 # output data structure.
 ###
-_ApplyGenerators := function(A, Y, start, finish, queues, K, currentLength, j)
+_ApplyGenerators := atomic function(A, readonly Y, start, finish, readwrite queue, K, currentLength, j, region)
   local offset, currentWord, i, w, l, ds, b, s, r, y;
-  b := j; #bucket = job number
   #For all the words in our range
   for offset in [start + K .. finish] do
     currentWord := Y[offset];
@@ -126,17 +124,18 @@ _ApplyGenerators := function(A, Y, start, finish, queues, K, currentLength, j)
     #for a in A
     for i in [1 .. Length(A)] do
       w := currentWord.value * A[i];
-      l := _Search(w, Y, queues[b]);
+      l := _Search(w, Y, queue);
 
-      if currentWord.suffix <> fail then
-        s := Y[_Find(Y, currentWord.suffix)];
-        if s.rightFlag[i] then
-          r := Y[_Find(Y, s.right[i])];
-          y := Y[_Find(Y, r.left[currentWord.first])];
-          #s.right[i] := y.right[r.last]; #THIS LINE IS THE PROBLEM
-         fi;
-      fi;
-
+      #if currentWord.suffix <> fail then
+      #  s := Y[_Find(Y, currentWord.suffix)];
+      #  if s.rightFlag[i] then
+      #    r := Y[_Find(Y, s.right[i])];
+      #    r.left[currentWord.first] := A[currentWord.first] * r.value;
+      #    y := Y[_Find(Y, r.left[currentWord.first])];
+      #    s.right[i] := y.right[r.last];
+      #    continue;
+      #   fi;
+      #fi;
       if l <> fail then #w = v(y) for some y
         currentWord.right[i] := l.value;
         currentWord.rightFlag[i] := true;
@@ -144,10 +143,11 @@ _ApplyGenerators := function(A, Y, start, finish, queues, K, currentLength, j)
         ds := _NewResultsDataStructure(w, currentWord.first, i, currentWord.value, A[i], Length(A), currentLength + 1);
         currentWord.right[i] := ds.value;
         currentWord.rightFlag[i] := false;
-        _AddQueue(queues, b, ds);
+        _AddQueue(queue, ds);
       fi;
     od;
   od;
+  Print("Terminate\n");
   return finish - start + 1;
 end;
 
@@ -158,17 +158,17 @@ end;
 # If they are new then they get added to the output data structure, otherwise
 # that data structure is updated to note a reduction
 ###
-_ProcessQueues := function(queues, results, j)
+_ProcessQueues := atomic function(readonly queue, readwrite results)
   local i, #Loop index
         l, #temporary look up
         w, #if word = wa then this is the w part
         word; #Temporary word holder
-  for i in [1..Length(queues[j])] do
-    word := queues[j][i];
+  for i in [1..Length(queue)] do
+    word := queue[i];
     l := _Get(results, word.value);
     if l <> fail then
       l.right[word.last] := word.value;
-      l.rightFlag[word.last] := false;
+      l.rightFlag[word.last] := true;
     else
       _Add(results, word);
     fi;
@@ -176,17 +176,21 @@ _ProcessQueues := function(queues, results, j)
   return 0;
 end;
 
-_DevelopLeft := function(Y, A, start, step)
+_DevelopLeft := atomic function(readonly Y, A, start, step)
   local offset, i, currentWord, p, r;
+  Print("Develop left!\n");
   #Iterate over a a range of results Y[start] to Y[finish]
   for offset in [start .. start + step] do
     currentWord := Y[offset];
     #for each a in A
     for i in [1 .. Length(A)] do
-      if currentWord.prefix = fail then #This is a generator value
+      if currentWord.prefix = fail or currentWord.prefix = 0 then #This is a generator value
         currentWord.left[i] := A[i];
       else
         p := _Get(Y, currentWord.prefix);
+        if p.left[i] = 0 then
+          p.left[i] := A[i] * p.value;
+        fi;
         r := _Get(Y, p.left[i]);
         currentWord.left[i] := r.right[currentWord.last];
       fi;
@@ -234,18 +238,21 @@ InstallGlobalFunction(FroidurePin_V1_1, function(generators)
   NewRegion(MainRegion);
   currentLength := 1; #Since we are starting with only generators
   K := 0; #The paper uses K = 1 but I think that is unintuitive
+  MakeImmutable(generators);
   jobs := Length(generators);
-  results := ShareObj(_CreateResults(MainRegion), MainRegion); #Results is Y our set of reduced words
+  results := ShareObj(_CreateResults(), MainRegion); #Results is Y our set of reduced words
   start := 1;
   finish := Length(generators);
   _InitialiseResults(results, generators, MainRegion);
-  MakeImmutable(generators);
-
   repeat
     added := [];
     #We do this here to ensure the queues are emptied every loop
-    queues := _CreateQueue(jobs, MainRegion); #For now assume that the number of queues is equal to the number of jobs
-    lengthResults := Length(results);
+    queues := _CreateQueue(jobs); #For now assume that the number of queues is equal to the number of jobs
+    ShareObj(queues, MainRegion);
+    atomic readonly results do
+      lengthResults := Length(results);
+    od;
+
     step := _CalcStep(lengthResults, start, jobs);
     r := start - 1;
     for j in [1 .. jobs] do
@@ -253,7 +260,9 @@ InstallGlobalFunction(FroidurePin_V1_1, function(generators)
       if r + step > lengthResults then
         step := lengthResults - r;
       fi;
-      Add(added, DelayTask(_ApplyGenerators, generators, results, r, r + step, queues, K, currentLength, j));
+      atomic readonly queues do
+        Add(added, RunTask(_ApplyGenerators, generators, results, r, r + step, queues[j], K, currentLength, j, MainRegion));
+      od;
       r := r + step;
     od;
 
@@ -265,9 +274,10 @@ InstallGlobalFunction(FroidurePin_V1_1, function(generators)
     od;
 
     added := [];
-
-    for j in [1 .. Length(queues)] do
-      Add(added, DelayTask(_ProcessQueues, queues, results, j));
+    for j in [1 .. jobs] do
+      atomic readonly queues do
+        Add(added, RunTask(_ProcessQueues, queues[j], results));
+      od;
     od;
 
     for j in [1 .. Length(added)] do
@@ -275,32 +285,36 @@ InstallGlobalFunction(FroidurePin_V1_1, function(generators)
     od;
     added := [];
 
-    lengthResults := Length(results);
-
-    step := _CalcStep(lengthResults, start, jobs);
-    r := start - 1;
-    for j in [1 .. jobs] do
-      r := r + 1;
-      if r + step > lengthResults then
-        step := lengthResults - r;
-      fi;
-      Add(added, DelayTask(_DevelopLeft, results, generators, start, step));
-      r := r + step;
+    atomic readonly results do
+      lengthResults := Length(results);
     od;
 
-    for j in [1 .. Length(added)] do
-      TaskResult(added[j]);
-    od;
+    #step := _CalcStep(lengthResults, start, jobs);
+    #r := start - 1;
+    #for j in [1 .. jobs] do
+    #  r := r + 1;
+    #  if r + step > lengthResults then
+    #    step := lengthResults - r;
+    #  fi;
+    #  Add(added, RunTask(_DevelopLeft, results, generators, start, step));
+    #  r := r + step;
+    #od;
+
+    #for j in [1 .. Length(added)] do
+    #  TaskResult(added[j]);
+    #od;
 
     #Adjustments
     if K >= (finish - start + 1) then
       start := finish + 1;
     fi;
     K := 0;
-    finish := Length(results);
+    atomic readonly results do
+      finish := Length(results);
+    od;
 
     currentLength := currentLength + 1;
   until K > (finish - start + 1) or currentLength >= 500; #od;
 
-  return results;
+  atomic results do return MAKE_PUBLIC(results); od;
 end);
