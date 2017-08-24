@@ -85,7 +85,7 @@ _NewResultsDataStructure := function(v, f, l, p, s, k, len)
 end;
 
 _DefaultDS := function(value, i, k)
-  return _NewResultsDataStructure(value, i, i, fail, fail, k, 1);
+  return _NewResultsDataStructure(value, i, i, value, fail , k, 1);
 end;
 
 _GetWord := function(YjKj, a)
@@ -123,19 +123,27 @@ _ApplyGenerators := atomic function(A, readonly Y, start, finish, readwrite queu
     fi;
     #for a in A
     for i in [1 .. Length(A)] do
+      s := _Find(Y, currentWord.suffix);
+      if s = fail then #s is the identity
+        currentWord.right[i] := A[currentWord.first];
+        currentWord.rightFlag[i] := true;
+      else
+        s := Y[s];
+        if s.rightFlag[i] then #if is not reduced
+          r := Y[_Find(Y, s.right[i])]; #We can get the right[i] value and then its prefix
+          r := Y[_Find(Y, r.prefix)];
+          y := r.left[currentWord.first];
+          if y = fail or y = 0 then
+            y := currentWord;
+          fi;
+          currentWord.right[i] := y.right[r.last];
+          currentWord.rightFlag[i] := true;
+          continue;
+        fi;
+      fi;
+
       w := currentWord.value * A[i];
       l := _Search(w, Y, queue);
-
-      #if currentWord.suffix <> fail then
-      #  s := Y[_Find(Y, currentWord.suffix)];
-      #  if s.rightFlag[i] then
-      #    r := Y[_Find(Y, s.right[i])];
-      #    r.left[currentWord.first] := A[currentWord.first] * r.value;
-      #    y := Y[_Find(Y, r.left[currentWord.first])];
-      #    s.right[i] := y.right[r.last];
-      #    continue;
-      #   fi;
-      #fi;
       if l <> fail then #w = v(y) for some y
         currentWord.right[i] := l.value;
         currentWord.rightFlag[i] := true;
@@ -147,7 +155,6 @@ _ApplyGenerators := atomic function(A, readonly Y, start, finish, readwrite queu
       fi;
     od;
   od;
-  Print("Terminate\n");
   return finish - start + 1;
 end;
 
@@ -178,7 +185,6 @@ end;
 
 _DevelopLeft := atomic function(readonly Y, A, start, step)
   local offset, i, currentWord, p, r;
-  Print("Develop left!\n");
   #Iterate over a a range of results Y[start] to Y[finish]
   for offset in [start .. start + step] do
     currentWord := Y[offset];
