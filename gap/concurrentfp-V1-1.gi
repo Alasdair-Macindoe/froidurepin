@@ -135,6 +135,8 @@ _ApplyGenerators := atomic function(A, readonly Y, start, finish, readwrite queu
           y := r.left[currentWord.first];
           if y = fail or y = 0 then
             y := currentWord;
+          else
+            y := _Get(Y, y);
           fi;
           currentWord.right[i] := y.right[r.last];
           currentWord.rightFlag[i] := true;
@@ -295,20 +297,20 @@ InstallGlobalFunction(FroidurePin_V1_1, function(generators)
       lengthResults := Length(results);
     od;
 
-    #step := _CalcStep(lengthResults, start, jobs);
-    #r := start - 1;
-    #for j in [1 .. jobs] do
-    #  r := r + 1;
-    #  if r + step > lengthResults then
-    #    step := lengthResults - r;
-    #  fi;
-    #  Add(added, RunTask(_DevelopLeft, results, generators, start, step));
-    #  r := r + step;
-    #od;
+    step := _CalcStep(lengthResults, start, jobs);
+    r := start - 1;
+    for j in [1 .. jobs] do
+      r := r + 1;
+      if r + step > lengthResults then
+        step := lengthResults - r;
+      fi;
+      Add(added, RunTask(_DevelopLeft, results, generators, start, step));
+      r := r + step;
+    od;
 
-    #for j in [1 .. Length(added)] do
-    #  TaskResult(added[j]);
-    #od;
+    for j in [1 .. Length(added)] do
+      TaskResult(added[j]); #potential bug here?
+    od;
 
     #Adjustments
     if K >= (finish - start + 1) then
