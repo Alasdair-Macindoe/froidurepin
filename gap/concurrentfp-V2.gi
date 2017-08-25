@@ -1,6 +1,7 @@
 #This takes a word and will return it a bucket to go deterministically
 #For a word ua its usage is b(ua) which will return an integer corresponding
 #to the bucket it should be placed in
+#**TAKES A WORD ENTRY AND NOT ANYTHING ELSE**
 b := function(w)
   return 1;
 end;
@@ -10,22 +11,31 @@ end;
 #generally use a supplementary method is correct
 Fragment := function(words, k)
   return rec(
-    Y := words; #This is a list of (reduced) Word records
-    K := k;
+    Y := words, #This is a list of (reduced) Word records
+    K := k
   );
 end;
 
 FragmentSize := function(fragment)
   return Length(fragment.Y);
-od;
+end;
 
 #Creates a default Fragment of words
 DefaultFragment := function(words)
   return Fragment(words, 1);
 end;
 
-EmptyFragment := function(words)
-  return Fragment([], 0);
+EmptyFragment := function()
+  return Fragment([], 1);
+end;
+
+CreateEmptyFragments := function(k)
+  local res, i;
+  res := [];
+  for i in [1.. k] do
+    Add(res, EmptyFragment());
+  od;
+  return res;
 end;
 
 #Word should be a Word record (not WordEntry record)
@@ -39,7 +49,7 @@ end;
 
 CheckFragments := function(fragments)
   local i, w;
-  for i in [1 .. fragments] do
+  for i in [1 .. Length(fragments)] do
     if fragments[i].K <= FragmentSize(fragments[i]) then
       return true;
     fi;
@@ -51,7 +61,7 @@ SearchFragment := function(fragment, value)
   local i, word;
   for i in [1 .. Length(fragment.Y)] do
     word := GetWordFromFragment(fragment, i);
-    if word = value then
+    if word.value = value then
       return word;
     fi;
   od;
@@ -67,26 +77,16 @@ SearchFragments := function(fragments, value)
       return word;
     fi;
   od;
+  return fail;
 end;
 
 #This will create a new word which is inside a specific bucket.
 #Generally a supplementary method should often be used.
 Word := function(bucket, wordRec)
   return rec(
-    b := bucket;
-    word := wordRec; #This is a WordEntry record
+    b := bucket,
+    word := wordRec #This is a WordEntry record
   );
-end;
-
-CreateNewWord := function(v, f, l, p, s, k, len)
-  local wordEntryRec, word;
-  wordEntryRec := WordEntry(v, f, l, p, s, k, len);
-  word := Word(b(v), wordEntryRec);
-  return word;
-end;
-
-WordLength := function(w)
-  return w.word.length;
 end;
 
 WordEntry := function(v, f, l, p, s, k, len)
@@ -110,6 +110,33 @@ WordEntry := function(v, f, l, p, s, k, len)
         );
 end;
 
+CreateNewWord := function(v, f, l, p, s, k, len)
+  local wordEntryRec, word;
+  wordEntryRec := WordEntry(v, f, l, p, s, k, len);
+  word := Word(b(v), wordEntryRec);
+  return word;
+end;
+
+InitFromGenerators := function(A, Y)
+  local i, a, NumberFragments, l, word;
+  NumberFragments := Length(Y);
+  for i in [1 .. Length(A)] do
+    a := A[i];
+    l := SearchFragments(Y, a);
+    if l = fail then #never added before
+      word := CreateNewWord(a, i, i, a, a, Length(A), 1);
+      AddToFragment(Y[word.b], word.word);
+    else
+      l.right[i] := a;
+      l.rightFlag[i] := false;
+    fi;
+  od;
+end;
+
+WordLength := function(w)
+  return w.length;
+end;
+
 #Creates k queues
 CreateQueues := function(k)
   local queue, i;
@@ -122,7 +149,7 @@ end;
 
 AddQueue := function(queue, j, word)
   Add(queue[j], word);
-od;
+end;
 
 #Recall that Y is a collection of fragments and Q is a collection of Queues
 #At this stage Qj will be empty
@@ -136,21 +163,26 @@ ApplyGenerators := function (A, Y, Q, j, currentLength)
         s, #s(YjKJ)
         p, #p(y)
         i;
+
   Yj := Y[j]; #This is a specific fragment now
-  while Yj.K <= FragmentSize(Yj) and WordLength(GetWordFromFragment(Yj, Yj.K)) = currentLength then
+  while Yj.K <= FragmentSize(Yj) and WordLength(GetWordFromFragment(Yj, Yj.K)) = currentLength do
     YjKj := GetWordFromFragment(Yj, Yj.K);
+    s := SearchFragment(Yj, YjKj.suffix);
     #for a in A
     for i in [1 .. Length(A)] do
       #important part
-      s := SearchFragment(Yj, YjKj.suffix);
       if s <> fail and s.rightFlag[i] = false then #this is the normal case when s is not reduced
         y := s.right[i];
+        y := SearchFragments(Y, y);
         p := SearchFragments(Y, y.prefix);
         w := p.left[YjKj.first];
-        if WordLength(w) < currentLength or (SearchFragment(Yj, w) <> fail) then
+        w := SearchFragments(Y, w);
+        if w = fail then
+          YjKj.right[i] := A[i];
+        elif WordLength(w) < currentLength or (SearchFragment(Yj, w) <> fail) then
           YjKj.right[i] := w.right[y.last];
           YjKj.rightFlag[i] := false;
-          continue;
+        fi;
       fi;
 
       word := YjKj.value * A[i];
@@ -160,7 +192,7 @@ ApplyGenerators := function (A, Y, Q, j, currentLength)
         v.rightFlag[i] := false;
       else #otherwise it is completely new
         word := CreateNewWord(word, YjKj.first, i, YjKj.value, A[i], Length(A), currentLength + 1);
-        YjKj.right[i] := word.value; #Is this the bug in V1_1?
+        YjKj.right[i] := word.word.value; #Is this the bug in V1_1?
         YjKj.rightFlag[i] := true;
         AddQueue(Q, j, word);
       fi;
@@ -173,12 +205,12 @@ ApplyGenerators := function (A, Y, Q, j, currentLength)
 end;
 
 ProcessQueues := function(Y, Q, j)
-  local q, i, j, word, value, l, w;
+  local q, i, k, word, value, l, w;
   #for b(wa), wa) in Q
   for i in [1 .. Length(Q)] do #for every queue
     q := Q[i];
-    for j in [1 .. Length(q)] do #for every word
-      word := q[j]; #This gives us a word record(with bucket)
+    for k in [1 .. Length(q)] do #for every word
+      word := q[k]; #This gives us a word record(with bucket)
 
       #b(word) = word.b
       if word.b = j then #for the bucket we are assigned to
@@ -186,12 +218,13 @@ ProcessQueues := function(Y, Q, j)
         value := word.value; #v(wa)
         l := SearchFragments(Y, value);
         w := word.suffix; #Recall word is wa this gives us w
+        w := SearchFragments(Y, w);
         if l <> fail then
-          w.right[word.last] := l;
+          w.right[word.last] := l.value;
           w.rightFlag[word.last] := false;
         else
           AddToFragment(Y[j], word); #This adds the word entry to the fragment
-          w.right[word.last] := word;
+          w.right[word.last] := value;
           w.rightFlag[word.last] := true;
         fi;
       fi;
@@ -202,19 +235,23 @@ ProcessQueues := function(Y, Q, j)
 end;
 
 DevelopLeft := function(A, Y, j, currentLength)
-  local Yj, i, Yji, j, p;
+  local Yj, i, Yji, k, p;
   Yj := Y[j];
-  for i in [1..Length(Yj)] do
+  for i in [1..Length(Yj.Y)] do
     Yji := GetWordFromFragment(Yj, i);
     if WordLength(Yji) < currentLength then
       continue;
     fi;
     #for a in A
-    for j in [1 .. Length(A)] do
-      p := GetWordFromFragments(Y, Yji.prefix);
-      p := GetWordFromFragments(Y, p.left[i]);
-      p := p.right[Yji.last];
-      Yji.left[i] := p;
+    for k in [1 .. Length(A)] do
+      p := SearchFragments(Y, Yji.prefix);
+      p := SearchFragments(Y, p.left[k]);
+      if p = fail then
+        Yji.left[k] := A[k] * Yji.value;
+      else
+        p := p.right[Yji.last];
+        Yji.left[k] := p;
+      fi;
     od;
   od;
   return 0;
@@ -222,14 +259,38 @@ end;
 
 #Merges all the fragments into one list
 Enumerated := function(Y)
-  return [];
+  local result, i;
+  result := [];
+  for i in [1 .. Length(Y)] do
+    Append(result, Y[i].Y);
+  od;
+  return result;
 end;
 
 InstallGlobalFunction(FroidurePin_V2, function(A)
-  local Y, currentLength;
-  Y := []; #The fragments can be stored in a list
+  local Y, currentLength, jobs, j, Q;
   currentLength := 1;
+  jobs := 1;#Length(A);
+  Y := CreateEmptyFragments(jobs); #The fragments can be stored in a list
+  InitFromGenerators(A, Y);
 
+  while CheckFragments(Y) and currentLength <= 5000 do
+
+    Q := CreateQueues(jobs);
+
+    for j in [1 .. jobs] do
+      ApplyGenerators(A, Y, Q, j, currentLength);
+    od;
+
+    for j in [1 .. jobs] do
+      ProcessQueues(Y, Q, j);
+    od;
+
+    for j in [1 .. jobs] do
+      DevelopLeft(A, Y, j, currentLength);
+    od;
+
+    currentLength := currentLength + 1;
+  od;
   return Enumerated(Y);
-end;
-);
+end);
