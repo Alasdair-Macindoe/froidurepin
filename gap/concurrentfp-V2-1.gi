@@ -278,7 +278,7 @@ end;
 InstallGlobalFunction(FroidurePin_V2, function(A)
   local Y, currentLength, jobs, j, Q;
   currentLength := 1;
-  jobs := 2;#Length(A);
+  jobs := Length(A);
   Y := CreateEmptyFragments(jobs); #The fragments can be stored in a list
   InitFromGenerators(A, Y, jobs);
 
