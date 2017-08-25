@@ -51,7 +51,10 @@ AddToFragment := function(fragment, word)
   Add(fragment.Y, word);
 end;
 
-GetWordFromFragment := function(fragment, number)
+GetWordFromFragment := atomic function(readonly fragment, number)
+  if number > Length(fragment.Y) then
+    return fail;
+  fi;
   return fragment.Y[number];
 end;
 
@@ -91,10 +94,10 @@ end;
 #This will create a new word which is inside a specific bucket.
 #Generally a supplementary method should often be used.
 Word := function(bucket, wordRec)
-  return rec(
+  return MAKE_PUBLIC(rec(
     b := bucket,
     word := wordRec #This is a WordEntry record
-  );
+  ));
 end;
 
 WordEntry := function(v, f, l, p, s, k, len)
@@ -141,8 +144,12 @@ InitFromGenerators := function(A, Y, jobs)
   od;
 end;
 
-WordLength := function(w)
-  return w.length;
+WordLength := atomic function(readonly w)
+  if w <> fail then
+    return w.length;
+  else
+    return 0;
+  fi;
 end;
 
 #Creates k queues
@@ -152,7 +159,7 @@ CreateQueues := function(k)
   for i in [1 .. k] do
     Add(queue, []);
   od;
-  return queue;
+  return MakeReadOnly(queue);
 end;
 
 AddQueue := function(queue, j, word)
@@ -171,7 +178,6 @@ ApplyGenerators := function (A, Y, Q, j, currentLength, jobs)
         s, #s(YjKJ)
         p, #p(y)
         i;
-
   Yj := Y[j]; #This is a specific fragment now
   while Yj.K <= FragmentSize(Yj) and WordLength(GetWordFromFragment(Yj, Yj.K)) = currentLength do
     YjKj := GetWordFromFragment(Yj, Yj.K);
@@ -212,14 +218,13 @@ ApplyGenerators := function (A, Y, Q, j, currentLength, jobs)
   return 0;
 end;
 
-ProcessQueues := function(Y, Q, j)
+ProcessQueues := atomic function(readonly Y, readonly Q, j)
   local q, i, k, word, value, l, w;
   #for b(wa), wa) in Q
   for i in [1 .. Length(Q)] do #for every queue
     q := Q[i];
     for k in [1 .. Length(q)] do #for every word
       word := q[k]; #This gives us a word record(with bucket)
-
       #b(word) = word.b
       if word.b = j then #for the bucket we are assigned to
         word := word.word; #This gives us a word entry
@@ -275,28 +280,41 @@ Enumerated := function(Y)
   return result;
 end;
 
-InstallGlobalFunction(FroidurePin_V2, function(A)
-  local Y, currentLength, jobs, j, Q;
-  currentLength := 1;
-  jobs := Length(A);
-  Y := CreateEmptyFragments(jobs); #The fragments can be stored in a list
-  InitFromGenerators(A, Y, jobs);
+RemoveTasks := function(tasks)
+  local i, j;
+  for i in [1 .. Length(tasks)] do
+    j := 0 + TaskResult(tasks[i]);
+  od;
+  return 0;
+end;
 
-  while CheckFragments(Y) and currentLength <= 5000 do
+InstallGlobalFunction(FroidurePin_V2_1, function(A)
+  local Y, currentLength, jobs, j, Q, tasks;
+  currentLength := 1;
+  jobs := 4;#Length(A);
+  Y := MakeReadOnly(CreateEmptyFragments(jobs)); #The fragments can be stored in a list
+  InitFromGenerators(A, Y, jobs);
+  tasks := [];
+  MakeImmutable(A); #Generators never change
+
+  while CheckFragments(Y) and currentLength <= 20 do
 
     Q := CreateQueues(jobs);
 
     for j in [1 .. jobs] do
-      ApplyGenerators(A, Y, Q, j, currentLength, jobs);
+      Add(tasks, RunTask(ApplyGenerators, A, Y, Q, j, currentLength, jobs));
     od;
+    RemoveTasks(tasks);
 
     for j in [1 .. jobs] do
-      ProcessQueues(Y, Q, j);
+      Add(tasks, RunTask(ProcessQueues, Y, Q, j));
     od;
+    RemoveTasks(tasks);
 
     for j in [1 .. jobs] do
-      DevelopLeft(A, Y, j, currentLength);
+      Add(tasks, RunTask(DevelopLeft, A, Y, j, currentLength));
     od;
+    RemoveTasks(tasks);
 
     currentLength := currentLength + 1;
   od;
