@@ -19,7 +19,7 @@ end;
 #generally use a supplementary method is correct
 Fragment := function(words, k)
   return rec(
-    Y := words, #This is a list of (reduced) Word records
+    Y := AtomicList(words), #This is a list of (reduced) Word records
     K := k
   );
 end;
@@ -47,7 +47,7 @@ CreateEmptyFragments := function(k)
 end;
 
 #Word should be a Word record (not WordEntry record)
-AddToFragment := function(fragment, word)
+AddToFragment := atomic function(readonly fragment, word)
   Add(fragment.Y, word);
 end;
 
@@ -58,7 +58,7 @@ GetWordFromFragment := atomic function(readonly fragment, number)
   return fragment.Y[number];
 end;
 
-CheckFragments := function(fragments)
+CheckFragments := atomic function(readonly fragments)
   local i, w;
   for i in [1 .. Length(fragments)] do
     if fragments[i].K <= FragmentSize(fragments[i]) then
@@ -68,7 +68,7 @@ CheckFragments := function(fragments)
   return false;
 end;
 
-SearchFragment := function(fragment, value)
+SearchFragment := atomic function(readonly fragment, value)
   local i, word;
   for i in [1 .. Length(fragment.Y)] do
     word := GetWordFromFragment(fragment, i);
@@ -79,7 +79,7 @@ SearchFragment := function(fragment, value)
   return fail;
 end;
 
-SearchFragments := function(fragments, value)
+SearchFragments := atomic function(readonly fragments, value)
   local i, fragment, word;
   for i in [1 .. Length(fragments)] do
     fragment := fragments[i];
@@ -128,7 +128,7 @@ CreateNewWord := function(v, f, l, p, s, k, len, jobs)
   return word;
 end;
 
-InitFromGenerators := function(A, Y, jobs)
+InitFromGenerators := atomic function(A,readonly Y, jobs)
   local i, a, NumberFragments, l, word;
   NumberFragments := Length(Y);
   for i in [1 .. Length(A)] do
@@ -168,7 +168,7 @@ end;
 
 #Recall that Y is a collection of fragments and Q is a collection of Queues
 #At this stage Qj will be empty
-ApplyGenerators := function (A, Y, Q, j, currentLength, jobs)
+ApplyGenerators := atomic function (A,readonly Y, Q, j, currentLength, jobs)
   local Yj, #Fragment j of Y
         YjKj, #Word Kj from Yj
         v, # v(YjKj) from paper
@@ -226,7 +226,7 @@ ProcessQueues := atomic function(readonly Y, readonly Q, j)
     for k in [1 .. Length(q)] do #for every word
       word := q[k]; #This gives us a word record(with bucket)
       #b(word) = word.b
-      if word.b = j then #for the bucket we are assigned to
+      if word.b = j then
         word := word.word; #This gives us a word entry
         value := word.value; #v(wa)
         l := SearchFragments(Y, value);
@@ -247,7 +247,7 @@ ProcessQueues := atomic function(readonly Y, readonly Q, j)
   return 0;
 end;
 
-DevelopLeft := function(A, Y, j, currentLength)
+DevelopLeft := atomic function(A,readonly Y, j, currentLength)
   local Yj, i, Yji, k, p;
   Yj := Y[j];
   for i in [1..Length(Yj.Y)] do
@@ -271,7 +271,7 @@ DevelopLeft := function(A, Y, j, currentLength)
 end;
 
 #Merges all the fragments into one list
-Enumerated := function(Y)
+Enumerated := atomic function(readonly Y)
   local result, i;
   result := [];
   for i in [1 .. Length(Y)] do
@@ -291,8 +291,8 @@ end;
 InstallGlobalFunction(FroidurePin_V2_1, function(A)
   local Y, currentLength, jobs, j, Q, tasks;
   currentLength := 1;
-  jobs := 4;#Length(A);
-  Y := MakeReadOnly(CreateEmptyFragments(jobs)); #The fragments can be stored in a list
+  jobs := Length(A);
+  Y := ShareObj(CreateEmptyFragments(jobs)); #The fragments can be stored in a list
   InitFromGenerators(A, Y, jobs);
   tasks := [];
   MakeImmutable(A); #Generators never change
