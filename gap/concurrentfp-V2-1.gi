@@ -18,6 +18,7 @@ end;
 #This takes a word and will return it a bucket to go deterministically
 #For a word ua its usage is b(ua) which will return an integer corresponding
 #to the bucket it should be placed in
+#TODO: This should work for all data types
 b := function(w, jobs)
   local c, res, i;
   if IsTransformation(w) then
@@ -202,7 +203,7 @@ ApplyGenerators := atomic function (A,readonly Y, Q, j, currentLength, jobs)
   Yj := Y[j]; #This is a specific fragment now
   while Yj.K <= FragmentSize(Yj) and WordLength(GetWordFromFragment(Yj, Yj.K)) = currentLength do
     YjKj := GetWordFromFragment(Yj, Yj.K);
-    s := SearchFragment(Yj, YjKj.suffix);
+    s := SearchFragment(Yj, YjKj.suffix); #TODO: Can I remove look ups?
     #for a in A
     for i in [1 .. Length(A)] do
       #important part
@@ -221,7 +222,7 @@ ApplyGenerators := atomic function (A,readonly Y, Q, j, currentLength, jobs)
       fi;
 
       word := YjKj.value * A[i];
-      v := SearchFragments(Y, word);
+      v := SearchFragments(Y, word); #TODO: Should this be SearchFragment?
       if v <> fail then #This word is already in there somewhere
         v.right[i] := YjKj.value;
         v.rightFlag[i] := false;
@@ -229,7 +230,7 @@ ApplyGenerators := atomic function (A,readonly Y, Q, j, currentLength, jobs)
         word := CreateNewWord(word, YjKj.first, i, YjKj.value, A[i], Length(A), currentLength + 1, jobs);
         YjKj.right[i] := word.word.value; #Is this the bug in V1_1?
         YjKj.rightFlag[i] := true;
-        AddQueue(Q, j, word);
+        AddQueue(Q, j, word); #TODO: Is this the correct bucket?
       fi;
 
     od;
@@ -250,7 +251,7 @@ ProcessQueues := atomic function(readonly Y, readonly Q, j)
       if word.b = j then
         word := word.word; #This gives us a word entry
         value := word.value; #v(wa)
-        l := SearchFragments(Y, value);
+        l := SearchFragments(Y, value); #TODO: Should this be SearchFragmet?
         w := word.suffix; #Recall word is wa this gives us w
         w := SearchFragments(Y, w);
         if l <> fail then

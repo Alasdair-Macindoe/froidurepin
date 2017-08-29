@@ -46,13 +46,13 @@ Data | Machine | Cores/Threads | Jobs | R1 | R2 | R3 | Avg |
 3    | 1       | 1      | Standard |340253  | 329592 | 326096 | 331980 |
 
 
-## Notes
+### Notes
 Unsurprisingly running a non-concurrent algorithm with more threads has no effect. There *could* be a small effect from the now threaded garbage collector which *might* be experimented on more later.
 
 The interesting part here is that data source 3 took 10x as long as data source 1 despite being approximately the same size.
 
 
-## Implementation Version 1.1
+### Implementation Version 1.1
 
 Data | Machine | Cores/Threads | Jobs | R1 | R2 | R3 | Avg |
 :---:|:-------:|:-------------:|:----:|:---:|:---:|:---:|:---:|
@@ -63,3 +63,79 @@ Data | Machine | Cores/Threads | Jobs | R1 | R2 | R3 | Avg |
 4 | 3 | 16 | Standard | 1962064 | 2023282 | 3551068 | 2512138 |
 4 | 3 | 32 | Standard | 2000759 | 2073269 | 3418658 | 2497562 |
 4 | 3 | 64 | Standard | 1938208 | 2078201 | 3515377 | 2510595 |
+
+## Implementation Version 2.1
+
+### Experiment 1
+
+#### Aim
+
+I investigate the scaling of this algorithm based upon the number of processes that HPC-GAP has available. In this case there is no change to the Hash function (the b parameter in the paper) or to the number of fragments created within the program (it is always the number of generators).
+This is tested on a 64 core machine so the number of cores start with one and are doubled until 128 to see how performance scales even after it exceeds the number on the machine.
+
+#### Data
+Data | Machine | -P value | Jobs |Hash Function | R1 | R2 | R3 | Avg |
+:---:|:-------:|:-------------:|:----:|:----:|:---:|:---:|:---:|:---:|
+1 | 3 | 32 | Standard | Standard | 62703 | 63878 | 65022 | 63868 |
+1 | 3 | 16 | Standard | Standard | 64235 | 64755 | 65296 | 64762 |
+4 | 3 | 1 | Standard | Standard | 8162778 | 8756292 | 8749683 | 8556251 |
+4 | 3 | 2 | Standard | Standard |
+4 | 3 | 4 | Standard | Standard |
+4 | 3 | 8 | Standard | Standard |
+4 | 3 | 16 | Standard | Standard |
+4 | 3 | 32 | Standard | Standard |
+4 | 3 | 64 | Standard | Standard |
+4 | 3 | 128 | Standard | Standard |
+
+### Experiment 2
+
+#### Aim
+
+In this experiment I wish to investigate how performance is linked to the number of fragments available to the machine. In each case the number of processes is limited to 32 but the number of jobs will vary from one and keep getting doubled until 64.
+
+#### Data
+
+Data | Machine | -P value | Jobs |Hash Function | R1 | R2 | R3 | Avg |
+:---:|:-------:|:-------------:|:----:|:----:|:---:|:---:|:---:|:---:|
+1 | 3 | 32 | 32 | Standard |
+1 | 3 | 32 | 16 | Standard |
+1 | 3 | 32 | 4 | Standard |
+4 | 3 | 32 | 1 | Standard |
+4 | 3 | 32 | 2 | Standard |
+4 | 3 | 32 | 4 | Standard |
+4 | 3 | 32 | 8 | Standard |
+4 | 3 | 32 | 16 | Standard |
+4 | 3 | 32 | 32 | Standard |
+4 | 3 | 32 | 64 | Standard |
+
+
+### Experiment 3
+
+#### Aim
+
+Due to some challenges in early development each word stores only the value of other words, and not a pointer. This means we have to look up each word in memory. If this could be removed it may speed up performance.
+
+#### Data
+
+Data | Machine | -P value | Jobs |Hash Function | R1 | R2 | R3 | Avg |
+:---:|:-------:|:-------------:|:----:|:----:|:---:|:---:|:---:|:---:|
+1 | 3 | 32 | 32 | Standard |
+1 | 3 | 32 | 16 | Standard |
+1 | 3 | 32 | 4 | Standard |
+4 | 3 | 32 | 1 | Standard |
+4 | 3 | 32 | 2 | Standard |
+4 | 3 | 32 | 4 | Standard |
+4 | 3 | 32 | 8 | Standard |
+4 | 3 | 32 | 16 | Standard |
+4 | 3 | 32 | 32 | Standard |
+4 | 3 | 32 | 64 | Standard |
+
+### Experiment 4
+
+#### Aim
+
+A core part of this algorithm is the hash function (called b in the paper). HPC-GAP does not have a good hash function for transformations so in this section I test out how important a good hash function is to the runtime. For example is better to have a more complex, slower, hash function that distributes better over a quick and easy hash function that distributes less uniformly.
+Please see `hash-versions.md` for more information on each hash function.
+
+Data | Machine | -P value | Jobs |Hash Function | R1 | R2 | R3 | Avg |
+:---:|:-------:|:-------------:|:----:|:----:|:---:|:---:|:---:|:---:|

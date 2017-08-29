@@ -30,3 +30,7 @@ gap> Read("test.g");
 # NOTE
 
 This is in **DEVELOPMENT** function name and parameters may change.
+
+# Paper
+
+Any and all reference to 'the paper' or 'paper' are referring to: arXiv:1704.04084v2 [math.GR]. 
