@@ -1,15 +1,36 @@
+_b_calc := function(list, jobs)
+  local i, res;
+  if Length(list) = 1 then
+    return list[1];
+  fi;
+  res := list[1] + jobs;
+  #Longer than 1
+  for i in [2 .. Length(list)] do
+    if i mod 2 = 0 then
+      res := res + list[i];
+    else
+      res := res - list[i];
+    fi;
+  od;
+  return res;
+end;
+
 #This takes a word and will return it a bucket to go deterministically
 #For a word ua its usage is b(ua) which will return an integer corresponding
 #to the bucket it should be placed in
 b := function(w, jobs)
-  local c;
+  local c, res, i;
   if IsTransformation(w) then
     c := ComponentsOfTransformation(w);
     #Special case
     if c = [] then
       return 1;
     fi;
-    return (Sum(Sum(c)) mod jobs) + 1;
+    res := 1;
+    for i in [1 .. Length(c)] do
+      res := res + _b_calc(c[i], jobs);
+    od;
+    return (res mod jobs) + 1;
   fi;
   return 1;
 end;
