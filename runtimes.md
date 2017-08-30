@@ -79,7 +79,7 @@ Data | Machine | -P value | Jobs |Hash Function | R1 | R2 | R3 | Avg |
 1 | 3 | 32 | Standard | Standard | 62703 | 63878 | 65022 | 63868 |
 1 | 3 | 16 | Standard | Standard | 64235 | 64755 | 65296 | 64762 |
 4 | 3 | 1 | Standard | Standard | 8162778 | 8756292 | 8749683 | 8556251 |
-4 | 3 | 2 | Standard | Standard |
+4 | 3 | 2 | Standard | Standard | 8860270 | 9880929 | 9792256 | 9511152 |
 4 | 3 | 4 | Standard | Standard |
 4 | 3 | 8 | Standard | Standard |
 4 | 3 | 16 | Standard | Standard |

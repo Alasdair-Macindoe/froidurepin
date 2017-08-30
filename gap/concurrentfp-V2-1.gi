@@ -69,18 +69,18 @@ CreateEmptyFragments := function(k)
 end;
 
 #Word should be a Word record (not WordEntry record)
-AddToFragment := atomic function(readonly fragment, word)
+AddToFragment := function(fragment, word)
   Add(fragment.Y, word);
 end;
 
-GetWordFromFragment := atomic function(readonly fragment, number)
+GetWordFromFragment := function(fragment, number)
   if number > Length(fragment.Y) then
     return fail;
   fi;
   return fragment.Y[number];
 end;
 
-CheckFragments := atomic function(readonly fragments)
+CheckFragments := function(fragments)
   local i, w;
   for i in [1 .. Length(fragments)] do
     if fragments[i].K <= FragmentSize(fragments[i]) then
@@ -90,7 +90,7 @@ CheckFragments := atomic function(readonly fragments)
   return false;
 end;
 
-SearchFragment := atomic function(readonly fragment, value)
+SearchFragment := function(fragment, value)
   local i, word;
   for i in [1 .. Length(fragment.Y)] do
     word := GetWordFromFragment(fragment, i);
@@ -101,7 +101,7 @@ SearchFragment := atomic function(readonly fragment, value)
   return fail;
 end;
 
-SearchFragments := atomic function(readonly fragments, value)
+SearchFragments := function(fragments, value)
   local i, fragment, word;
   for i in [1 .. Length(fragments)] do
     fragment := fragments[i];
@@ -150,7 +150,7 @@ CreateNewWord := function(v, f, l, p, s, k, len, jobs)
   return word;
 end;
 
-InitFromGenerators := atomic function(A,readonly Y, jobs)
+InitFromGenerators := function(A, Y, jobs)
   local i, a, NumberFragments, l, word;
   NumberFragments := Length(Y);
   for i in [1 .. Length(A)] do
@@ -166,7 +166,7 @@ InitFromGenerators := atomic function(A,readonly Y, jobs)
   od;
 end;
 
-WordLength := atomic function(readonly w)
+WordLength := function(w)
   if w <> fail then
     return w.length;
   else
@@ -190,7 +190,7 @@ end;
 
 #Recall that Y is a collection of fragments and Q is a collection of Queues
 #At this stage Qj will be empty
-ApplyGenerators := atomic function (A,readonly Y, Q, j, currentLength, jobs)
+ApplyGenerators := function (A, Y, Q, j, currentLength, jobs)
   local Yj, #Fragment j of Y
         YjKj, #Word Kj from Yj
         v, # v(YjKj) from paper
@@ -240,7 +240,7 @@ ApplyGenerators := atomic function (A,readonly Y, Q, j, currentLength, jobs)
   return 0;
 end;
 
-ProcessQueues := atomic function(readonly Y, readonly Q, j)
+ProcessQueues := function(Y, Q, j)
   local q, i, k, word, value, l, w;
   #for b(wa), wa) in Q
   for i in [1 .. Length(Q)] do #for every queue
@@ -249,9 +249,9 @@ ProcessQueues := atomic function(readonly Y, readonly Q, j)
       word := q[k]; #This gives us a word record(with bucket)
       #b(word) = word.b
       if word.b = j then
+        value := word.word.value; #v(wa)
+        l := SearchFragment(Y[word.b], value);
         word := word.word; #This gives us a word entry
-        value := word.value; #v(wa)
-        l := SearchFragments(Y, value); #TODO: Should this be SearchFragmet?
         w := word.suffix; #Recall word is wa this gives us w
         w := SearchFragments(Y, w);
         if l <> fail then
@@ -269,7 +269,7 @@ ProcessQueues := atomic function(readonly Y, readonly Q, j)
   return 0;
 end;
 
-DevelopLeft := atomic function(A,readonly Y, j, currentLength)
+DevelopLeft := function(A, Y, j, currentLength)
   local Yj, i, Yji, k, p;
   Yj := Y[j];
   for i in [1..Length(Yj.Y)] do
@@ -293,7 +293,7 @@ DevelopLeft := atomic function(A,readonly Y, j, currentLength)
 end;
 
 #Merges all the fragments into one list
-Enumerated := atomic function(readonly Y)
+Enumerated := function(Y)
   local result, i;
   result := [];
   for i in [1 .. Length(Y)] do
@@ -314,7 +314,7 @@ InstallGlobalFunction(FroidurePin_V2_1, function(A)
   local Y, currentLength, jobs, j, Q, tasks;
   currentLength := 1;
   jobs := Length(A);
-  Y := ShareObj(CreateEmptyFragments(jobs)); #The fragments can be stored in a list
+  Y := MakeReadOnly(CreateEmptyFragments(jobs)); #The fragments can be stored in a list
   InitFromGenerators(A, Y, jobs);
   tasks := [];
   MakeImmutable(A); #Generators never change
