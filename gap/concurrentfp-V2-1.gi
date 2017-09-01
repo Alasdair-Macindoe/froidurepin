@@ -222,7 +222,7 @@ ApplyGenerators := function (A, Y, Q, j, currentLength, jobs)
       fi;
 
       word := YjKj.value * A[i];
-      v := SearchFragments(Y, word); #TODO: Should this be SearchFragment?
+      v := SearchFragment(Yj, word);
       if v <> fail then #This word is already in there somewhere
         v.right[i] := YjKj.value;
         v.rightFlag[i] := false;
@@ -230,7 +230,7 @@ ApplyGenerators := function (A, Y, Q, j, currentLength, jobs)
         word := CreateNewWord(word, YjKj.first, i, YjKj.value, A[i], Length(A), currentLength + 1, jobs);
         YjKj.right[i] := word.word.value; #Is this the bug in V1_1?
         YjKj.rightFlag[i] := true;
-        AddQueue(Q, j, word); #TODO: Is this the correct bucket?
+        AddQueue(Q, j, word);
       fi;
 
     od;

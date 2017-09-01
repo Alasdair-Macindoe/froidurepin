@@ -342,4 +342,16 @@ g := [ Transformation( [ 1, 7, 5, 2, 2, 1, 6, 6 ] ), Transformation( [ 3, 2, 2, 
 
 Size: 294691
 
-Larger semigroup that can be used to establish scalability. 
+Larger semigroup that can be used to establish scalability.
+
+## 6
+
+```
+g := [ Transformation( [ 6, 7, 11, 8, 3, 8, 4, 6, 6, 9, 14, 10, 2, 5 ] ), Transformation( [ 9, 6, 12, 10, 12, 3, 5, 1, 5, 1, 12, 5, 5, 13 ] ) ];;
+```
+
+### Reason
+
+Size: 124386
+
+Large semigroup with few generators and expensive multiplications.

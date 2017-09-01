@@ -1,0 +1,76 @@
+\documentclass{report}
+\author{Alasdair Macindoe}
+\date{}
+\title{Work Package 5.2: A Report}
+\usepackage{hyperref}
+
+\begin{document}
+\maketitle
+
+\section*{Acknowledgements}
+We acknowledge financial support from the \href{http://opendreamkit.org/}{OpenDreamKit} \href{https://ec.europa.eu/programmes/horizon2020/}{Horizon 2020}
+\href{https://ec.europa.eu/programmes/horizon2020/en/h2020-section/european-research-infrastructures-including-e-infrastructures}{European Research Infrastructures}
+project (\href{http://cordis.europa.eu/project/rcn/198334_en.html}{\#676541}).
+Further we would like to thank \href{https://www.cs.st-andrews.ac.uk/directory/person?id=mp397}{Dr Markus Pfeiffer} for his supervision and all his help
+that was invaluable for this project.
+
+\section*{Introduction}
+Whilst enumerating finite semigroups is a computationally expensive there are algothims that can run - in a practical sense - faster than naively enumerating
+the semigroup. One example of this algorithm was published in 1997 by Froidure and Pin\cite{fpin} (which will hereby be called the Froidure-Pin algorithm).
+Unfortunately this algorithm does not run concurrently which is a problem for modern computational problems. This leads to another version of Froidure-Pin to be
+published\cite{cfp} (which I will henceforth call the concurrent Froidure-Pin) for which a C++ implementation exists\cite{cfpcpp}.
+\newline
+\newline
+The aim of this project was to re-implement the concurrent Froidure-Pin algorithm in HPC-GAP\cite{GAP4} and analyse its scalability.
+The full repository for this project can be found on Github\cite{project}.
+
+\section*{Structure}
+All the code can be located on Github\cite{project}. The following may be of interest:
+\newline
+\begin{description}
+\item \texttt{README.md}: Installation and testing instructions
+\item \texttt{versions.md}: Explanation of implementation details
+\item \texttt{runtimes.md}: Raw data from experiments
+\item \texttt{runtimes.md}: Explanation of different semigroups for testing
+\item \texttt{experiment.g}: File to run experiments
+\item \texttt{gap/}: Various implementations
+\end{description}
+
+\section*{Algorithm}
+The following is a computational explanation of the algorithm (without implementation details) for those who are more computationally minded than mathematically.
+\newline
+\subsection*{Data Structures}
+The following data structures are required:
+\begin{enumerate}
+\item \texttt{A fragment data structure}: A fragment consists of a value \texttt{K} and a list of \texttt{reduced words}
+\item \texttt{A queue data structure}: In order to remain lockless each job cannot communicate with any other. This means there is no way, in ApplyGenerators,
+for any specific job to know if another job has the same word already. This queue data structure will hold any word that a job beleives \textit{may} be new
+\item \texttt{A word data structure}: To hold any and all relevant information on a specific word
+\end{enumerate}
+
+Additionally the following methods are required:
+
+\begin{enumerate}
+\item An entry point
+\item ApplyGenerators
+\item ProcessQueues
+\item DevelopLeft
+\item A method for deterministically determining the bucket for a word
+\end{enumerate}
+
+Further a way to obtain the following information (either through a data structure or through method) are required:
+
+\begin{enumerate}
+\item A word's suffix
+\item A word's prefix
+\item A word's right multiplications already calculated
+\item A word's left multiplications already calculated
+\item A word's first letter
+\item A word's last letter
+\end{enumerate}
+
+Additional methods or information may be required on how you choose to implement the algorithm.
+
+\bibliographystyle{plain}
+\bibliography{citations}
+\end{document}
