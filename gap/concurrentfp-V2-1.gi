@@ -41,7 +41,7 @@ end;
 #generally use a supplementary method is correct
 Fragment := function(words, k)
   return rec(
-    Y := AtomicList(words), #This is a list of (reduced) Word records
+    Y := words, #This is a list of (reduced) Word records
     K := k
   );
 end;
@@ -158,7 +158,10 @@ InitFromGenerators := function(A, Y, jobs)
     l := SearchFragments(Y, a);
     if l = fail then #never added before
       word := CreateNewWord(a, i, i, a, a, Length(A), 1, jobs);
+      word.word.suffix := word.word;
+      word.word.prefix := word.word;
       AddToFragment(Y[word.b], word.word);
+      A[i] := word.word;
     else
       l.right[i] := a;
       l.rightFlag[i] := false;
@@ -203,32 +206,29 @@ ApplyGenerators := function (A, Y, Q, j, currentLength, jobs)
   Yj := Y[j]; #This is a specific fragment now
   while Yj.K <= FragmentSize(Yj) and WordLength(GetWordFromFragment(Yj, Yj.K)) = currentLength do
     YjKj := GetWordFromFragment(Yj, Yj.K);
-    s := SearchFragment(Yj, YjKj.suffix); #TODO: Can I remove look ups?
+    s := YjKj.suffix;
     #for a in A
     for i in [1 .. Length(A)] do
       #important part
       if s <> fail and s.rightFlag[i] = false then #this is the normal case when s is not reduced
-        y := s.right[i];
-        y := SearchFragments(Y, y);
-        p := SearchFragments(Y, y.prefix);
+        y := s.right[i].prefix;
+        p := y.prefix;
         w := p.left[YjKj.first];
-        w := SearchFragments(Y, w);
-        if w = fail then
+        if w = fail or w = 0 then
           YjKj.right[i] := A[i];
-        elif WordLength(w) < currentLength or (SearchFragment(Yj, w) <> fail) then
+        elif (w <> fail and w <> 0 ) and (WordLength(w) < currentLength or (SearchFragment(Yj, w) <> fail)) then
           YjKj.right[i] := w.right[y.last];
           YjKj.rightFlag[i] := false;
         fi;
       fi;
-
-      word := YjKj.value * A[i];
+      word := YjKj.value * A[i].value;
       v := SearchFragment(Yj, word);
       if v <> fail then #This word is already in there somewhere
-        v.right[i] := YjKj.value;
+        v.right[i] := YjKj;
         v.rightFlag[i] := false;
       else #otherwise it is completely new
-        word := CreateNewWord(word, YjKj.first, i, YjKj.value, A[i], Length(A), currentLength + 1, jobs);
-        YjKj.right[i] := word.word.value; #Is this the bug in V1_1?
+        word := CreateNewWord(word, YjKj.first, i, YjKj, A[i], Length(A), currentLength + 1, jobs);
+        YjKj.right[i] := word.word; #Is this the bug in V1_1?
         YjKj.rightFlag[i] := true;
         AddQueue(Q, j, word);
       fi;
@@ -253,13 +253,13 @@ ProcessQueues := function(Y, Q, j)
         l := SearchFragment(Y[word.b], value);
         word := word.word; #This gives us a word entry
         w := word.suffix; #Recall word is wa this gives us w
-        w := SearchFragments(Y, w);
+        #w := SearchFragments(Y, w);
         if l <> fail then
-          w.right[word.last] := l.value;
+          w.right[word.last] := l;
           w.rightFlag[word.last] := false;
         else
           AddToFragment(Y[j], word); #This adds the word entry to the fragment
-          w.right[word.last] := value;
+          w.right[word.last] := word;
           w.rightFlag[word.last] := true;
         fi;
       fi;
@@ -270,24 +270,20 @@ ProcessQueues := function(Y, Q, j)
 end;
 
 DevelopLeft := function(A, Y, j, currentLength)
-  local Yj, i, Yji, k, p;
+  local Yj, i, Yji, k, p, Lj;
   Yj := Y[j];
-  for i in [1..Length(Yj.Y)] do
-    Yji := GetWordFromFragment(Yj, i);
-    if WordLength(Yji) < currentLength then
-      continue;
+  for i in [1 .. FragmentSize(Yj)] do
+    Yji := Yj.Y[i];
+    if WordLength(Yji) = currentLength then
+      for k in [1 .. Length(A)] do
+        p := Yji.prefix.left[k];
+        if p = fail or p = 0 then
+          Yji.left[k] := A[k];
+        else
+          Yji.left[k] := p.right[Yji.last];
+        fi;
+      od;
     fi;
-    #for a in A
-    for k in [1 .. Length(A)] do
-      p := SearchFragments(Y, Yji.prefix);
-      p := SearchFragments(Y, p.left[k]);
-      if p = fail then
-        Yji.left[k] := A[k] * Yji.value;
-      else
-        p := p.right[Yji.last];
-        Yji.left[k] := p;
-      fi;
-    od;
   od;
   return 0;
 end;
@@ -305,7 +301,7 @@ end;
 RemoveTasks := function(tasks)
   local i, j;
   for i in [1 .. Length(tasks)] do
-    j := 0 + TaskResult(tasks[i]);
+    TaskResult(tasks[i]);
   od;
   return 0;
 end;
@@ -317,9 +313,9 @@ InstallGlobalFunction(FroidurePin_V2_1, function(A)
   Y := MakeReadOnly(CreateEmptyFragments(jobs)); #The fragments can be stored in a list
   InitFromGenerators(A, Y, jobs);
   tasks := [];
-  MakeImmutable(A); #Generators never change
+  MakeReadOnly(A); #Generators never change
 
-  while CheckFragments(Y) and currentLength <= 20 do
+  while CheckFragments(Y) and currentLength <= 100 do
 
     Q := CreateQueues(jobs);
 
