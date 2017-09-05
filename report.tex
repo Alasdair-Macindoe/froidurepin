@@ -3,6 +3,13 @@
 \date{}
 \title{Work Package 5.2: A Report}
 \usepackage{hyperref}
+\usepackage{listings}
+\lstset{
+  numbers = left,
+  tabsize = 1,
+  stepnumber = 1,
+  breaklines=true,
+}
 
 \begin{document}
 \maketitle
@@ -15,10 +22,10 @@ Further we would like to thank \href{https://www.cs.st-andrews.ac.uk/directory/p
 that was invaluable for this project.
 
 \section*{Introduction}
-Whilst enumerating finite semigroups is a computationally expensive there are algothims that can run - in a practical sense - faster than naively enumerating
+Whilst enumerating finite semigroups is computationally expensive there are algorithms that can run - in a practical sense - faster than naively enumerating
 the semigroup. One example of this algorithm was published in 1997 by Froidure and Pin\cite{fpin} (which will hereby be called the Froidure-Pin algorithm).
-Unfortunately this algorithm does not run concurrently which is a problem for modern computational problems. This leads to another version of Froidure-Pin to be
-published\cite{cfp} (which I will henceforth call the concurrent Froidure-Pin) for which a C++ implementation exists\cite{cfpcpp}.
+Unfortunately this algorithm does not run concurrently which is a problem for modern computational problems; thus this lead to another version of Froidure-Pin to be
+published\cite{cfp} (which we will henceforth call the concurrent Froidure-Pin) which can run concurrently and for which a C++ implementation exists\cite{cfpcpp}.
 \newline
 \newline
 The aim of this project was to re-implement the concurrent Froidure-Pin algorithm in HPC-GAP\cite{GAP4} and analyse its scalability.
@@ -31,45 +38,37 @@ All the code can be located on Github\cite{project}. The following may be of int
 \item \texttt{README.md}: Installation and testing instructions
 \item \texttt{versions.md}: Explanation of implementation details
 \item \texttt{runtimes.md}: Raw data from experiments
-\item \texttt{runtimes.md}: Explanation of different semigroups for testing
+\item \texttt{data.md}: Explanation of different semigroups for testing
 \item \texttt{experiment.g}: File to run experiments
 \item \texttt{gap/}: Various implementations
+\item \texttt{tst/}: The test file
 \end{description}
 
-\section*{Algorithm}
-The following is a computational explanation of the algorithm (without implementation details) for those who are more computationally minded than mathematically.
-\newline
-\subsection*{Data Structures}
-The following data structures are required:
-\begin{enumerate}
-\item \texttt{A fragment data structure}: A fragment consists of a value \texttt{K} and a list of \texttt{reduced words}
-\item \texttt{A queue data structure}: In order to remain lockless each job cannot communicate with any other. This means there is no way, in ApplyGenerators,
-for any specific job to know if another job has the same word already. This queue data structure will hold any word that a job beleives \textit{may} be new
-\item \texttt{A word data structure}: To hold any and all relevant information on a specific word
-\end{enumerate}
+\section*{Implementation}
+\texttt{Version 2.1} is an exact implementation of the version given in the paper. Since the paper does not dictate what data structures should be used
+the full implementation details can be found in \texttt{versions.md}. This gives very detailed overview of the algorithm and why it can run locklessly,
+as well as the reasons for the specific data structures.
 
-Additionally the following methods are required:
+\section*{Analysis}
+Please refer to \texttt{runtimes.md} for the raw data, only summaries are provided below.
+[[TO BE COMPLETED]]
 
-\begin{enumerate}
-\item An entry point
-\item ApplyGenerators
-\item ProcessQueues
-\item DevelopLeft
-\item A method for deterministically determining the bucket for a word
-\end{enumerate}
+\section*{Contributions to HPC-GAP}
+A bug in HPC-GAP was discovered which would cause a segmentation fault when an empty list was attempted to be migrated between tasks.
+This was fixed by Dr Markus Pfeiffer\cite{hpcsol}.
 
-Further a way to obtain the following information (either through a data structure or through method) are required:
+\section*{Future Work}
+We have identified some potential future works that could be done:
 
 \begin{enumerate}
-\item A word's suffix
-\item A word's prefix
-\item A word's right multiplications already calculated
-\item A word's left multiplications already calculated
-\item A word's first letter
-\item A word's last letter
+\item Fix any outstanding bugs and perform more significant testing
+\item Covert data structures across to the HPC-GAP's datastructures package\cite{ds}
+\item Investigate performance increases by using HPC-GAP's threads and processes API
+\item Investigate performance increases in HPC-GAP's tasks system
 \end{enumerate}
 
-Additional methods or information may be required on how you choose to implement the algorithm.
+\section*{Conclusion}
+[[TO BE COMPLETED]]
 
 \bibliographystyle{plain}
 \bibliography{citations}

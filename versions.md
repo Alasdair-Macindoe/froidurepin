@@ -2,23 +2,7 @@
 Please refer to `data.md` for the input corresponding to each number.
 Additionally to `runtimes.md` for the runtime of each version.  
 
-# Running Example
-For explanations consider the following semigroup over {a, b, c, d} which has [a, b] as generators and the following multiples:
-
-```
-aa = c
-ab = a
-ba = d
-bb = a
-ca = a
-ac = a
-cb = d
-bc = d
-da = b
-db = a
-ba = d
-bd = a
-```
+`Version 2.1` is an exact implementation from the paper.
 
 Then let Y = the set of reduced words at a specific stage, and A = the generators for this semigroup.
 
@@ -66,43 +50,55 @@ HPC-GAP's Task system and uses locking to allow us to maintain a 1-D array for o
 
 # Version 2 - Paper Implementation
 
-This implementation is almost identical to the version implemented in the paper with one exception which requires me to have one lock because of how HPC-GAP works. It is required to acquire a read-lock a fragment before adding a word to it.
+This implementation is identical to the one given in the paper. Version 2.0 is the non-concurrent implementation and Version 2.1 uses HPC-GAP's built in `tasks` for concurrency.
 
 ## Data Structures and Supplementary Functions
 
 ### Bucket Function (Hash Function)
 
-Unfortunately HPC-GAP does not seem to have a built in hash function for Transformations (which is what I am traditionally working with) as such I had to design my own for Transformations. Please refer to `hash-versions.md` for more information on these.
+Unfortunately HPC-GAP does not seem to have a built in hash function for Transformations (which is what I am traditionally working with) as such I had to design my own for Transformations. It is very important to note that the bucket function **must** be deterministic.
 
 ### Fragment
 
-The paper defines a fragment. From a computational perspective a fragment is a collection of words and a value K which is used as a counter to the first unread (by Apply Generators) word. For example if Apply Generators had read the first and second word then K would be 3. Words are stored as an AtomicList structure which is just a list that has access control.  
+The paper defines a fragment. From a computational perspective a fragment is a collection of words and a value K which is used as a counter to the first unread (by Apply Generators) word. For example if Apply Generators had read the first and second word then K would be 3. Words are stored as an List structure and access control is not needed on them.
+
+### Fragments
+
+All of the fragments are stored in a list which makes it easy to assign a fragment to a task because each task has a job number which is the index into the list.
 
 ### Word
 
-A Word is the combination of two values. Firstly the bucket number it should be placed in (in Apply Queues) and secondly the `wordRec` which is the word's value, suffix, prefix, and all other information required.
+A Word is the concatenation of two values (or a generator value). It contains two attributes: firstly the bucket number it should be placed in (in Apply Queues) and secondly the `wordRec` which is the word's value, suffix, prefix, and all other information required which is full described in `Word Entry`.
 
 ### Word Entry
 
-A Word Entry defines the state of a word. It defines its value, what words create it, what happens when it is multiplied (left and right) by a generator and its length.
+A Word Entry defines the state of a word. It defines its value, what words create it, what happens when it is multiplied (left and right) by a generator and its length. This means we substitute a few of the functions defined in the paper for memory lookups. We are of the opinion that this increases the readability of the code.
+
+### Reduced Words
+
+Each reduced word is stored in a list within the fragment. This is not a perfect solution, but HPC-GAP has no hash function for `Transformations`. 
 
 ### CreateQueues
 
-CreateQueues method creates the buckets that each generated word (from Apply Generators) will be placed into.
-
+CreateQueues method creates the buckets that each generated word (from Apply Generators) will be placed into. This needs to be equal to the number of jobs that there will be.
 
 ## Main Algorithm
 
 ### Apply Generators
 
-Each instance of Apply Generators created (one per task) deals with a specific fragment of reduced words (`Y` is the set of all fragments and internally `Yj` is used for the jth fragment). It uses the K value defined within that fragment to iterate until we have exceeded the size of the fragment (note that at this stage we are *never* increasing the size of fragments) and that the word is the length that we are currently iterating over.
+Each instance of Apply Generators created (one per task) deals with a specific fragment of reduced words (`Y` is the set of all fragments and internally `Yj` is used for the jth fragment). It uses the K value defined within that fragment to iterate until we have exceeded the size of the fragment (note that at this stage we are *never* increasing the size of fragments) and that the word is the length that we are currently iterating over. We do not require a lock on the fragment `Yj` because it is only being used in one thread; the thread with the `jth` job assigned to it.
 
-We then require the Kth word for that fragment (internally called `YjKj`). For every generator we perform a series of instructions. Firstly we check to see if its suffix's right multiple by this generator is reduced or not and if it is not reduced then we reduce it.
+We then require the Kth word for that fragment (internally called `YjKj`) which you may notice we do not need to lock either because for each job (which gets its own task) the iteration is linear across the words which means each thread is accessing at most one word in its fragment's words at any time. For every generator we perform a series of instructions. Firstly we check to see if its suffix's right multiple by this generator is reduced or not and if it is not reduced then we reduce it.
 
-Secondly we find the right multiple of this word with that generator and see if it exists. Note that no locking is required at this point since we are not ever editing anything within the set of reduced words.
+Secondly we find the right multiple of this word with that generator and see if it exists within the fragment we are assigned to. Note that no locking is required at this point since we are not ever editing anything within the set of reduced words, if we do amend a word it is specific to that task which means no other job will be trying to access it.
 If the word exists then its right multiple is updated, otherwise we create a new word with that value (which gives it a bucket number) and add it to that bucket and added to that jobs queue for Process Queues.
-
+Further note that a word *may* exist in another fragment this means that not all values placed into the queue will actually be unique - this is done to avoid any locking.
 
 ### Process Queues
 
-In order to remove the requirement for locking the implementation makes each ProcessQueues loop over every word in every queue and then perform the merging steps on words that have the bucket entry corresponding to its job number. This works because each word (until the inner part) is read only and since each word can only have one bucket there can be no race conditions when we merge the word (no other task has this word). Additionally notice that the bucketing function is deterministic this means that any identical words are put in the same bucket even if they have different queue numbers. 
+In order to remove the requirement for locking the implementation makes each `ProcessQueues` loop over every word in every queue (this is read only because we do not update the words inside `ProcessQueues`) and then perform the merging steps on words that have the bucket entry corresponding to its job number (this means each `ProcessQueues` instances deals with a different bucket meaning no concurrency issues arise). This works because each word (until the inner part) is read only and since each word can only have one bucket (and each instance has a different bucket) there can be no race conditions when we merge the word (no other task has this word and no other task is using this bucket). Additionally notice that the bucketing function is deterministic this means that any identical words are put in the same bucket even if they have different queue numbers meaning that two tasks will never attempt to add the same word.
+For clarity: We are adding any unique word (from all fragments) to a specific fragment which is what ever task has the bucket that word is assigned to.
+
+### Develop Left
+
+The paper does not define `DevelopLeft` but we believed the code looked neater if it was abstracted to its own function. `DevelopLeft` develops the left Caley graph for each newly added word as well as performing any reductions of older words. Each task of `DevelopLeft` deals with exactly one of the fragments (which at this stage all have unique words). Occasionally words in other fragments may need to accessed but it is read only in this task and the part of the word we care about (the prefix) is never updated once set allowing us to do this safely.

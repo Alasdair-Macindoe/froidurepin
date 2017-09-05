@@ -54,23 +54,32 @@ The interesting part here is that data source 3 took 10x as long as data source 
 
 ### Implementation Version 1.1
 
-Data | Machine | Cores/Threads | Jobs | R1 | R2 | R3 | Avg |
-:---:|:-------:|:-------------:|:----:|:---:|:---:|:---:|:---:|
-4 | 3 | 1 | Standard | 1520517 | 1626999 | 2460460 | 1869325 |
-4 | 3 | 2 | Standard | 1878334 | 1993524 | 3114131 | 2328663 |
-4 | 3 | 4 | Standard | 1989091 | 2170925 | 3506349 | 1992122 |
-4 | 3 | 8 | Standard | 1975318 | 2053770 | 3277022 | 2435237 |
-4 | 3 | 16 | Standard | 1962064 | 2023282 | 3551068 | 2512138 |
-4 | 3 | 32 | Standard | 2000759 | 2073269 | 3418658 | 2497562 |
-4 | 3 | 64 | Standard | 1938208 | 2078201 | 3515377 | 2510595 |
+Data | Machine | Cores/Threads | Hash Function | Jobs | R1 | R2 | R3 | Avg |
+:---:|:-------:|:-------------:|:----:|:----:|:---:|:---:|:---:|:---:|
+4 | 3 | 1 | Standard | Standard | 1520517 | 1626999 | 2460460 | 1869325 |
+4 | 3 | 2 | Standard | Standard | 1878334 | 1993524 | 3114131 | 2328663 |
+4 | 3 | 4 | Standard | Standard | 1989091 | 2170925 | 3506349 | 1992122 |
+4 | 3 | 8 | Standard |Standard |  1975318 | 2053770 | 3277022 | 2435237 |
+4 | 3 | 16 | Standard | Standard | 1962064 | 2023282 | 3551068 | 2512138 |
+4 | 3 | 32 | Standard | Standard | 2000759 | 2073269 | 3418658 | 2497562 |
+4 | 3 | 64 | Standard | Standard | 1938208 | 2078201 | 3515377 | 2510595 |
 
 ### Experiment 1
 
 #### Aim
 
-Evaluated scalability of an alternate implementation.
+Evaluated scalability of an alternate implementation. Standard Hash function.
 
 #### Results
+
+Data | Machine | Cores/Threads | Jobs  | R1 | R2 | R3 | Avg |
+:---:|:-------:|:-------------:|:----:|:---:|:---:|:---:|:---:|
+6 | 3 | 32 | 1 | 9961059 | 11656681 | 10515160 | 10710967 |
+6 | 3 | 32 | 4 | 18559771 | 20216191 | 15134205 | 17970056 |
+6 | 3 | 32 | 8 | 23362961 | 23252902 | 23614766 | 23410210 |
+6 | 3 | 32 | 16 | 36822654 | 38902672 | 40513875 |38746400 |
+6 | 3 | 32 | 32 | 69870811 | 81523778 | 64826209 | 72073599 |
+6 | 3 | 32 | 64 | 59601009 | 73371167 | 81624581 | 71532252 |
 
 ## Implementation Version 2.0
 
@@ -99,44 +108,23 @@ Data | Machine | -P value | Jobs |Hash Function | R1 | R2 | R3 | Avg |
 :---:|:-------:|:-------------:|:----:|:----:|:---:|:---:|:---:|:---:|
 1 | 3 | 32 | Standard | Standard | 62703 | 63878 | 65022 | 63868 |
 1 | 3 | 16 | Standard | Standard | 64235 | 64755 | 65296 | 64762 |
-4 | 3 | 1 | Standard | Standard | 8162778 | 8756292 | 8749683 | 8556251 |
-4 | 3 | 2 | Standard | Standard | 8860270 | 9880929 | 9792256 | 9511152 |
-4 | 3 | 4 | Standard | Standard | 9375262 | 9731983 | 9847083 | 9651443 |
-4 | 3 | 8 | Standard | Standard | 9176178 | 9975205 | 9864154 | 9671846 |
-4 | 3 | 16 | Standard | Standard | 9577685 | 10080654 | 10632342 | 10096894 |
-4 | 3 | 32 | Standard | Standard | 9270256 | 10021059 | 9867895 | 9719733 |
-4 | 3 | 64 | Standard | Standard | 9345471 | 10502387 | 10731793 | 10193217 |
+4 | 3 | 1 | Standard | Standard |
+4 | 3 | 2 | Standard | Standard |
+4 | 3 | 4 | Standard | Standard |
+4 | 3 | 8 | Standard | Standard |
+4 | 3 | 16 | Standard | Standard |
+4 | 3 | 32 | Standard | Standard |
+4 | 3 | 64 | Standard | Standard |
+6 | 3 | 1 | Standard | Standard | 6955576 | 7689726 | 8494424 | 7713242 |
+6 | 3 | 2 | Standard | Standard | 6820522 | 7560187 | 8070741 | 7483817 |
+6 | 3 | 4 | Standard | Standard | 6756816 | 7893151 | 8685619 | 7778529 |
+6 | 3 | 8 | Standard | Standard | 6939613 |
 
 ### Experiment 2
 
 #### Aim
 
 In this experiment I wish to investigate how performance is linked to the number of fragments available to the machine. In each case the number of processes is limited to 32 but the number of jobs will vary from one and keep getting doubled until 64.
-
-#### Data
-
-Data | Machine | -P value | Jobs |Hash Function | R1 | R2 | R3 | Avg |
-:---:|:-------:|:-------------:|:----:|:----:|:---:|:---:|:---:|:---:|
-1 | 3 | 32 | 32 | Standard | 59868 | 60830 | 62310 | 61003 |
-1 | 3 | 32 | 16 | Standard | 62080 | 60470 | 61014 | 61188 |
-1 | 3 | 32 | 4 | Standard | 53310 | 53412 | 53196 | 53306 |
-4 | 3 | 32 | 1 | Standard | 9744256 | 8412270 | 9973076 | 9376534 |
-4 | 3 | 32 | 2 | Standard | 9123348 | 8400005 | 8209207 | 8577520 |
-4 | 3 | 32 | 4 | Standard | 11298995 | 11007668 | 11193768 | 11166810 |
-4 | 3 | 32 | 8 | Standard | 12637243 | 11637508 | 12325946 | 12200232 |
-4 | 3 | 32 | 16 | Standard | 11393922 | 10864954 | 11624802 | 11294559 |
-4 | 3 | 32 | 32 | Standard | 9722663 | 10795969 | 10755596 |10424743 |
-4 | 3 | 32 | 64 | Standard | 9345471 | 10502387 | 10731793 | 10193217 |
-6 | 3 | 32 | 1 | Standard | 27291182 | 29226594 | N/A | 29226594 |
-6 | 3 | 32 | 2 | Standard | 28394204 | 29987942 | N/A | 29191073 |
-6 | 3 | 32 | 8 | Standard | 38887776 | 40726670 | N/A | 39807223 |
-6 | 3 | 32 | 16 | Standard | 41645220 | 44325273 | N/A | 42985247 |
-
-### Experiment 3
-
-#### Aim
-
-Due to some challenges in early development each word stores only the value of other words, and not a pointer. This means we have to look up each word in memory. If this could be removed it may speed up performance.
 
 #### Data
 
@@ -152,8 +140,12 @@ Data | Machine | -P value | Jobs |Hash Function | R1 | R2 | R3 | Avg |
 4 | 3 | 32 | 16 | Standard |
 4 | 3 | 32 | 32 | Standard |
 4 | 3 | 32 | 64 | Standard |
+6 | 3 | 32 | 1 | Standard |
+6 | 3 | 32 | 2 | Standard |
+6 | 3 | 32 | 8 | Standard |
+6 | 3 | 32 | 16 | Standard |
 
-### Experiment 4
+### Experiment 3
 
 #### Aim
 
