@@ -118,7 +118,11 @@ Data | Machine | -P value | Jobs |Hash Function | R1 | R2 | R3 | Avg |
 6 | 3 | 1 | Standard | Standard | 6955576 | 7689726 | 8494424 | 7713242 |
 6 | 3 | 2 | Standard | Standard | 6820522 | 7560187 | 8070741 | 7483817 |
 6 | 3 | 4 | Standard | Standard | 6756816 | 7893151 | 8685619 | 7778529 |
-6 | 3 | 8 | Standard | Standard | 6939613 |
+6 | 3 | 8 | Standard | Standard | 6939613 | 7862565 | 8372100 | 7724759 |
+6 | 3 | 16 | Standard | Standard | 7003672 | 7768049 | 8028530 | 7600084 |
+6 | 3 | 32 | Standard | Standard | 6994618 | 7849276 | 8334006 | 7725967 |
+6 | 3 | 64 | Standard | Standard | 6620556 | 7521463 | 7894263 | 7345427 |
+
 
 ### Experiment 2
 
@@ -140,10 +144,13 @@ Data | Machine | -P value | Jobs |Hash Function | R1 | R2 | R3 | Avg |
 4 | 3 | 32 | 16 | Standard |
 4 | 3 | 32 | 32 | Standard |
 4 | 3 | 32 | 64 | Standard |
-6 | 3 | 32 | 1 | Standard |
-6 | 3 | 32 | 2 | Standard |
-6 | 3 | 32 | 8 | Standard |
-6 | 3 | 32 | 16 | Standard |
+6 | 3 | 32 | 2 | Standard | 8482088 | 8748061 | 9378134 |
+6 | 3 | 32 | 2 | Standard | 8769410 | 9231658 | 8375905 |
+6 | 3 | 32 | 4 | Standard | 6806727 | 7022969 | 7027339 |
+6 | 3 | 32 | 8 | Standard | 4640586 | 4435855 | 4626419 |
+6 | 3 | 32 | 16 | Standard | 2331557 | 2274763 |2268689 |
+6 | 3 | 32 | 32 | Standard | 883814 | 867390 | 847761 |
+6 | 3 | 32 | 64 | Standard | 630728 | 638010 | 621052 |
 
 ### Experiment 3
 

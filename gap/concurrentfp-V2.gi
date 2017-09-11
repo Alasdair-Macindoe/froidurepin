@@ -1,3 +1,21 @@
+#
+#    Complexfp-V2 - an implementation at a lockless noncurrent implementation of the concurrent Froidure-Pin.
+#    Copyright (C) 2017  Alasdair G. Macindoe
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 #This takes a word and will return it a bucket to go deterministically
 #For a word ua its usage is b(ua) which will return an integer corresponding
 #to the bucket it should be placed in

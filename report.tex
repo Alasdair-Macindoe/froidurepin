@@ -28,8 +28,10 @@ Unfortunately this algorithm does not run concurrently which is a problem for mo
 published\cite{cfp} (which we will henceforth call the concurrent Froidure-Pin) which can run concurrently and for which a C++ implementation exists\cite{cfpcpp}.
 \newline
 \newline
+\subsection*{Aim}
 The aim of this project was to re-implement the concurrent Froidure-Pin algorithm in HPC-GAP\cite{GAP4} and analyse its scalability.
-The full repository for this project can be found on Github\cite{project}.
+The full repository for this project can be found on Github\cite{project}. This code was then shared to the general public under
+the GNY GPL v3 license.
 
 \section*{Structure}
 All the code can be located on Github\cite{project}. The following may be of interest:
@@ -43,6 +45,19 @@ All the code can be located on Github\cite{project}. The following may be of int
 \item \texttt{gap/}: Various implementations
 \item \texttt{tst/}: The test file
 \end{description}
+
+\section*{Failed Attempts and Approach}
+This was a very challenging project, and there are many attempts before we arrived at \texttt{Version 2.1} which were failures.
+The first attempt was creating in GAP the simplistic \texttt{naiveenumeration} variation, then from there work on implementing the
+Froidure-Pin algorithm itself.
+\newline
+The real difficulty began with the concurrent Froidure-Pin algorthim which was written in some very dense mathematical notation.
+We have an attempt \texttt{concurrentfp} where we completely misunderstood the algorithm, we have \texttt{Version 1.x} which whilst
+do perform the job correctly and not truly concurrent at every stage and require locking.
+The insights gained from these failures did allow us to produce \texttt{Version 2.1} which we are incredibly happy with.
+\newline
+Overall we feel like this approach was the most beneficial. Not only did it require learning about semigroups and GAP, but it allowed us
+to start from the beginning and develop our way through the approaches done throughout the years and improve and learn ourselves from our failures.
 
 \section*{Implementation}
 \texttt{Version 2.1} is an exact implementation of the version given in the paper. Since the paper does not dictate what data structures should be used
@@ -68,7 +83,11 @@ We have identified some potential future works that could be done:
 \end{enumerate}
 
 \section*{Conclusion}
-[[TO BE COMPLETED]]
+In sum we have successfully implemented the concurrent Froidure-Pin algorithm several times in HPC-GAP and compared their scalability.
+Additionally we have identified bugs that exist within HPC-GAP and identified future work that could be conducted in this area.
+\newline
+We further believe that the skills honed here will allow us to make stronger Computer Scientists and software engineers.
+[[TO BE COMPLETED WHEN WE HAVE RESULTS]]
 
 \bibliographystyle{plain}
 \bibliography{citations}
