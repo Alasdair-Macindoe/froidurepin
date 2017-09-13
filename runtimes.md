@@ -81,19 +81,6 @@ Data | Machine | Cores/Threads | Jobs  | R1 | R2 | R3 | Avg |
 6 | 3 | 32 | 32 | 69870811 | 81523778 | 64826209 | 72073599 |
 6 | 3 | 32 | 64 | 59601009 | 73371167 | 81624581 | 71532252 |
 
-## Implementation Version 2.0
-
-### Experiment 1
-
-#### Aim
-
-To establish base cases for all the data sets. Standard hash function, 1 task, 1 core. Uses non-concurrent implementation.
-
-Data | Machine | R1 | R2 | R3 | Avg |
-:---:|:--------|:---:|:---:|:---:|:---:|
-4 | 3 |
-6 | 3 |
-
 ## Implementation Version 2.1
 
 ### Experiment 1
@@ -108,13 +95,6 @@ Data | Machine | -P value | Jobs |Hash Function | R1 | R2 | R3 | Avg |
 :---:|:-------:|:-------------:|:----:|:----:|:---:|:---:|:---:|:---:|
 1 | 3 | 32 | Standard | Standard | 62703 | 63878 | 65022 | 63868 |
 1 | 3 | 16 | Standard | Standard | 64235 | 64755 | 65296 | 64762 |
-4 | 3 | 1 | Standard | Standard |
-4 | 3 | 2 | Standard | Standard |
-4 | 3 | 4 | Standard | Standard |
-4 | 3 | 8 | Standard | Standard |
-4 | 3 | 16 | Standard | Standard |
-4 | 3 | 32 | Standard | Standard |
-4 | 3 | 64 | Standard | Standard |
 6 | 3 | 1 | Standard | Standard | 6955576 | 7689726 | 8494424 | 7713242 |
 6 | 3 | 2 | Standard | Standard | 6820522 | 7560187 | 8070741 | 7483817 |
 6 | 3 | 4 | Standard | Standard | 6756816 | 7893151 | 8685619 | 7778529 |
@@ -134,30 +114,10 @@ In this experiment I wish to investigate how performance is linked to the number
 
 Data | Machine | -P value | Jobs |Hash Function | R1 | R2 | R3 | Avg |
 :---:|:-------:|:-------------:|:----:|:----:|:---:|:---:|:---:|:---:|
-1 | 3 | 32 | 32 | Standard |
-1 | 3 | 32 | 16 | Standard |
-1 | 3 | 32 | 4 | Standard |
-4 | 3 | 32 | 1 | Standard |
-4 | 3 | 32 | 2 | Standard |
-4 | 3 | 32 | 4 | Standard |
-4 | 3 | 32 | 8 | Standard |
-4 | 3 | 32 | 16 | Standard |
-4 | 3 | 32 | 32 | Standard |
-4 | 3 | 32 | 64 | Standard |
-6 | 3 | 32 | 2 | Standard | 8482088 | 8748061 | 9378134 |
+6 | 3 | 32 | 1 | Standard | 8482088 | 8748061 | 9378134 |
 6 | 3 | 32 | 2 | Standard | 8769410 | 9231658 | 8375905 |
 6 | 3 | 32 | 4 | Standard | 6806727 | 7022969 | 7027339 |
 6 | 3 | 32 | 8 | Standard | 4640586 | 4435855 | 4626419 |
 6 | 3 | 32 | 16 | Standard | 2331557 | 2274763 |2268689 |
 6 | 3 | 32 | 32 | Standard | 883814 | 867390 | 847761 |
 6 | 3 | 32 | 64 | Standard | 630728 | 638010 | 621052 |
-
-### Experiment 3
-
-#### Aim
-
-A core part of this algorithm is the hash function (called b in the paper). HPC-GAP does not have a good hash function for transformations so in this section I test out how important a good hash function is to the runtime. For example is better to have a more complex, slower, hash function that distributes better over a quick and easy hash function that distributes less uniformly.
-Please see `hash-versions.md` for more information on each hash function.
-
-Data | Machine | -P value | Jobs |Hash Function | R1 | R2 | R3 | Avg |
-:---:|:-------:|:-------------:|:----:|:----:|:---:|:---:|:---:|:---:|

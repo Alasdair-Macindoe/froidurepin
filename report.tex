@@ -4,6 +4,7 @@
 \title{Work Package 5.2: A Report}
 \usepackage{hyperref}
 \usepackage{listings}
+\usepackage{pgfplots}
 \lstset{
   numbers = left,
   tabsize = 1,
@@ -66,7 +67,14 @@ as well as the reasons for the specific data structures.
 
 \section*{Analysis}
 Please refer to \texttt{runtimes.md} for the raw data, only summaries are provided below.
-[[TO BE COMPLETED]]
+\newline
+All experiments are on implementation \texttt{Version 2.x}.
+
+\subsection*{Experiment 1}
+The aim of this experiment was to see the effect of increasing the number of core available without increasing the number of fragments.
+\newline
+We believe this was worth investigating because HPC-GAP's Task implementation is not guaranteed 1 to 1 with processes.
+\newline
 
 \section*{Contributions to HPC-GAP}
 A bug in HPC-GAP was discovered which would cause a segmentation fault when an empty list was attempted to be migrated between tasks.
