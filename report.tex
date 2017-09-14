@@ -75,7 +75,95 @@ The aim of this experiment was to see the effect of increasing the number of cor
 \newline
 We believe this was worth investigating because HPC-GAP's Task implementation is not guaranteed 1 to 1 with processes.
 \newline
+\begin{tikzpicture}
+\begin{axis}[
+    title={Runtime for Data 6},
+    xlabel={-P Value},
+    ylabel={Avg. Runtime (msec)},
+    xmin=1, xmax=64,
+    ymin=0, ymax=9000000,
+    xtick={1, 2, 4, 8, 16, 32, 64},
+    ymajorgrids=true,
+    grid style=dashed,
+]
+ 
+\addplot[
+    color=blue,
+    mark=square,
+    ]
+    coordinates {
+    (1, 7713242)(2, 7483817)(4, 7778529)(8, 7724759)(16, 7600084)(32, 7725967)(64, 7345427)
+    };
+ 
+\end{axis}
+\end{tikzpicture}
 
+From this we can see that there is no effect on the runtime when we just vary the number of core available without changing the number of fragments.
+
+\subsection*{Experiment 2}
+The aim of this experiment was to instead see how the number of fragments effects the runtime. We keep P = 32 for all attempts.
+\newline
+\begin{tikzpicture}
+\begin{axis}[
+    title={Runtime for Data 6},
+    xlabel={Number of Fragments},
+    ylabel={Avg. Runtime (msec)},
+    xmin=1, xmax=64,
+    ymin=0, ymax=9000000,
+    xtick={1, 2, 4, 8, 16, 32, 64},
+    ymajorgrids=true,
+    grid style=dashed,
+]
+ 
+\addplot[
+    color=blue,
+    mark=square,
+    ]
+    coordinates {
+    (1, 8202761)(2, 8792324)(4, 6952345)(8, 4567620)(16, 2291670)(32, 866321)(64, 629930)
+    };
+ 
+\end{axis}
+\end{tikzpicture}
+This very clearly has an impact even beyond the number of cores available. 
+
+\begin{table}
+\begin{tabular}{cc}
+\multicolumn{1}{l}{\textbf{Cores}} & \multicolumn{1}{l}{\textbf{Speed up Percentage}} \\
+1                                  & -                                                \\
+2                                  & 107                                              \\
+4                                  & 21                                               \\
+8                                  & 35                                               \\
+16                                 & 50                                               \\
+32                                 & 63                                               \\
+64                                 & 28                                              
+\end{tabular}
+\end{table}
+
+This clearly shows that the rate of decrease in time becomes faster as we approach the number of cores and fragments being equal, it further shows that this rate decreases once we exceed that. Further experimentation may show that this trend reverses as we dramatically exceed our -P value. 
+\newline
+\begin{tikzpicture}
+\begin{axis}[
+    title={Change in Runtimes for Data 6},
+    xlabel={Number of Fragments},
+    ylabel={Percentage difference between times},
+    xmin=1, xmax=64,
+    ymin=0, ymax=110,
+    xtick={1, 2, 4, 8, 16, 32, 64},
+    ymajorgrids=true,
+    grid style=dashed,
+]
+ 
+\addplot[
+    color=blue,
+    mark=square,
+    ]
+    coordinates {
+    (1, 100)(2, 107)(4, 21)(8, 35)(16, 50)(32, 63)(64, 28)
+    };
+ 
+\end{axis}
+\end{tikzpicture}
 \section*{Contributions to HPC-GAP}
 A bug in HPC-GAP was discovered which would cause a segmentation fault when an empty list was attempted to be migrated between tasks.
 This was fixed by Dr Markus Pfeiffer\cite{hpcsol}.
@@ -95,7 +183,9 @@ In sum we have successfully implemented the concurrent Froidure-Pin algorithm se
 Additionally we have identified bugs that exist within HPC-GAP and identified future work that could be conducted in this area.
 \newline
 We further believe that the skills honed here will allow us to make stronger Computer Scientists and software engineers.
-[[TO BE COMPLETED WHEN WE HAVE RESULTS]]
+\newline
+The experimentation clearly shows that the algorithm's runtime scales reasonably well with large number of cores with the most dramatic speed ups occurring as we near the number of available cores. 
+
 
 \bibliographystyle{plain}
 \bibliography{citations}
