@@ -76,7 +76,7 @@ A Word Entry defines the state of a word. It defines its value, what words creat
 
 ### Reduced Words
 
-Each reduced word is stored in a list within the fragment. This is not a perfect solution, but HPC-GAP has no hash function for `Transformations`. 
+Each reduced word is stored in a list within the fragment. This is not a perfect solution, but HPC-GAP has no hash function for `Transformations`.
 
 ### CreateQueues
 
@@ -86,13 +86,13 @@ CreateQueues method creates the buckets that each generated word (from Apply Gen
 
 ### Apply Generators
 
-Each instance of Apply Generators created (one per task) deals with a specific fragment of reduced words (`Y` is the set of all fragments and internally `Yj` is used for the jth fragment). It uses the K value defined within that fragment to iterate until we have exceeded the size of the fragment (note that at this stage we are *never* increasing the size of fragments) and that the word is the length that we are currently iterating over. We do not require a lock on the fragment `Yj` because it is only being used in one thread; the thread with the `jth` job assigned to it.
+Each instance of Apply Generators created (one per task) deals with a specific fragment of reduced words (`Y` is the set of all fragments and internally `Yj` is used for the jth fragment). It uses the K value defined within that fragment to iterate until we have exceeded the size of the fragment (note that at this stage we are *never* increasing the size of fragments) or the word we are currently on is above the length that we are currently iterating over. We do not require a lock on the fragment `Yj` because it is only being used in one thread; the thread with the `jth` job assigned to it.
 
 We then require the Kth word for that fragment (internally called `YjKj`) which you may notice we do not need to lock either because for each job (which gets its own task) the iteration is linear across the words which means each thread is accessing at most one word in its fragment's words at any time. For every generator we perform a series of instructions. Firstly we check to see if its suffix's right multiple by this generator is reduced or not and if it is not reduced then we reduce it.
 
 Secondly we find the right multiple of this word with that generator and see if it exists within the fragment we are assigned to. Note that no locking is required at this point since we are not ever editing anything within the set of reduced words, if we do amend a word it is specific to that task which means no other job will be trying to access it.
 If the word exists then its right multiple is updated, otherwise we create a new word with that value (which gives it a bucket number) and add it to that bucket and added to that jobs queue for Process Queues.
-Further note that a word *may* exist in another fragment this means that not all values placed into the queue will actually be unique - this is done to avoid any locking.
+Further note that a word may exist in another fragment this means that not all values placed into the queue will actually be unique - this is done to avoid any locking.
 
 ### Process Queues
 
