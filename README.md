@@ -6,7 +6,7 @@ More information will be made available as the project develops if necessary.
 
 # Installation
 
-Please place in the correct pkg folder such as either `gap/pkg` or `hpcgap/pkg`.  This can be done by navigating to the correct folder and executing a `git clone` command such as `git clone https://github.com/Alasdair-Macindoe/parallel-sgrp-gap froidurepin`.
+Please place in the correct pkg folder such as either `gap/pkg` or `hpcgap/pkg`.  This can be done by navigating to the correct folder and executing a `git clone` command such as `git clone https://github.com/Alasdair-Macindoe/froidurepin`.
 
 Then you can load the package from within GAP by using `LoadPackage("froidurepin")`.
 
@@ -14,7 +14,7 @@ For example (from gap root):
 
 ```
 cd hpcgap/pkg
-git clone https://github.com/Alasdair-Macindoe/parallel-sgrp-gap froidurepin
+git clone https://github.com/Alasdair-Macindoe/froidurepin
 ```
 
 # Testing
@@ -33,4 +33,4 @@ This is in **DEVELOPMENT** function name and parameters may change.
 
 # Paper
 
-Any and all reference to 'the paper' or 'paper' are referring to: arXiv:1704.04084v2 [math.GR]. 
+Any and all reference to 'the paper' or 'paper' are referring to: arXiv:1704.04084v2 [math.GR].
