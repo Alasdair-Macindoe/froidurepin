@@ -16,6 +16,7 @@ cd ../..
 make -j4 V=1
 make bootstrap-pkg-minimal
 
+pwd
 # build some packages...
 cd pkg
 
@@ -23,7 +24,7 @@ cd pkg
 git clone https://github.com/gap-packages/datastructures
 cd datastructures
 ./autogen.sh
-./configure $CONFIGFLAGS
+./configure $CONFIGFLAGS --with-gaproot=$GAPROOT
 make -j4 V=1
 cd ../../..
 
