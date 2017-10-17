@@ -17,14 +17,16 @@ make -j4 V=1
 make bootstrap-pkg-minimal
 
 pwd
+ls
 # build some packages...
 cd pkg
 
 # install latest version of datastructures
 git clone https://github.com/gap-packages/datastructures
 cd datastructures
+ls
 ./autogen.sh
-./configure $CONFIGFLAGS --with-gaproot=$GAPROOT
+./configure $CONFIGFLAGS --with-gaproot="../.."
 make -j4 V=1
 cd ../../..
 
