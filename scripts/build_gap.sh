@@ -7,7 +7,7 @@ set -ex
 git clone --depth=2 https://github.com/gap-system/gap.git $GAPROOT
 cd $GAPROOT
 ./autogen.sh
-./configure
+./configure --enable-hpcgap
 make -j4 V=1
 make bootstrap-pkg-minimal
 
