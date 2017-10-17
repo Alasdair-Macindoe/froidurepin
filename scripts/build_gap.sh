@@ -25,8 +25,9 @@ cd pkg
 git clone https://github.com/gap-packages/datastructures
 cd datastructures
 ls
+ls pkg
 ./autogen.sh
-./configure $CONFIGFLAGS --with-gaproot="../.."
+./configure
 make -j4 V=1
 cd ../../..
 
