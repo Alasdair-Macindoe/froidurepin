@@ -25,8 +25,9 @@ cd datastructures
 ./autogen.sh
 ./configure $CONFIGFLAGS
 make -j4 V=1
-cd ../..
+cd ../../..
 
+pwd
 ls
 ls $GAPROOT
 ls $GAPROOT/pkg
