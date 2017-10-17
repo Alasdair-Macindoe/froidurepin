@@ -10,7 +10,7 @@ cd hpcgap
 git clone https://github.com/gap-system/ward
 cd ward
 ./build.sh
-cd $GAPROOT
+cd ../..
 ./autogen.sh
 ./configure --enable-hpcgap
 make -j4 V=1
