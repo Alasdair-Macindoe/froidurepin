@@ -20,12 +20,12 @@ pwd
 ls
 # build some packages...
 cd pkg
+ls
 
 # install latest version of datastructures
 git clone https://github.com/gap-packages/datastructures
 cd datastructures
 ls
-ls pkg
 ./autogen.sh
 ./configure
 make -j4 V=1
