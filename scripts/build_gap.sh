@@ -28,7 +28,7 @@ cd datastructures
 ls
 ./autogen.sh
 ./configure
-make -j4 V=1
+make -j4 V=1 CPPFLAGS="-I../../extern/install/libatomic_ops/include/ -L../../extern/install/libatomic_ops/lib"
 cd ../../..
 
 pwd
