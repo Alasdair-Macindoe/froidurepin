@@ -1,4 +1,5 @@
 # parallel-sgrp-gap
+[![Build Status](https://travis-ci.org/Alasdair-Macindoe/froidurepin.svg?branch=master)](https://travis-ci.org/Alasdair-Macindoe/froidurepin)
 
 The ultimate aim of this project is to implement Froidure-Pin Semigroup-Enumeration in HPC-GAP and evaluate its performance and scalability in relation to the C++ implementation, find performance bottlenecks, and work on improvements or more HPC-GAP idiomatic algorithm design.
 
