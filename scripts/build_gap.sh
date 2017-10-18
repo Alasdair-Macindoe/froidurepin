@@ -16,11 +16,20 @@ cd ../..
 make -j4 V=1
 make bootstrap-pkg-minimal
 
-pwd
-ls
 # build some packages...
 cd pkg
-ls
+
+# install latest version of profiling
+git clone https://github.com/gap-packages/profiling
+cd profiling
+./autogen.sh
+# HACK to workaround problems when building with clang
+if [[ $CC = clang ]]
+then
+    export CXX=clang++
+fi
+./configure $CONFIGFLAGS
+make -j4 V=1
 
 # install latest version of datastructures
 git clone https://github.com/gap-packages/datastructures
@@ -31,7 +40,6 @@ ls
 make -j4 V=1 CPPFLAGS="-I../../extern/install/libatomic_ops/include/ -L../../extern/install/libatomic_ops/lib"
 cd ../../..
 
-pwd
 ls
 ls $GAPROOT
 ls $GAPROOT/pkg
