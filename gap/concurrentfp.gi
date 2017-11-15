@@ -22,13 +22,24 @@ b := function(w, jobs)
   return (HashBasic(w) mod jobs) + 1;
 end;
 
+CreateList := function(ht)
+  local temp_list, k;
+  temp_list := [];
+  for k in [1 .. Length(ht![6])] do
+    if IsBound(ht![6][k]) then
+      Add(temp_list, ht![6][k]);
+    fi;
+  od;
+  return temp_list;
+end;
 #This corresponds to a fragment of reduced words and its corresponding K value
 #Use this method to create a new Fragment. Care should be taken when using this,
 #generally use a supplementary method is correct
 Fragment := function(words, k)
   return rec(
     Y := words, #This is a list of (reduced) Word records
-    K := k
+    K := k,
+    V := CreateList(words)
   );
 end;
 
@@ -52,13 +63,14 @@ end;
 #Word should be a Word record (not WordEntry record)
 AddToFragment := function(fragment, word)
   fragment.Y[word.value] := word;
+  Add(fragment.V, word);
 end;
 
 GetWordFromFragment := function(fragment, number)
   if number > FragmentSize(fragment) then
     return fail;
   fi;
-  return fragment.Y[number];
+  return fragment.V[number];
 end;
 
 CheckFragments := function(fragments)
@@ -267,12 +279,7 @@ Enumerated := function(fragments)
   local result, i, temp_list, j, k;
   result := [];
   for i in [1 .. Length(fragments)] do
-    temp_list := [];
-    for k in [1 .. Length(fragments[i].Y![6])] do
-      if IsBound(fragments[i].Y![6][k]) then
-        Add(temp_list, fragments[i].Y![6][k]);
-      fi;
-    od;
+    temp_list := CreateList(fragments[i].Y);
     for j in [1 .. Length(temp_list)] do
       Add(result, temp_list[j]);
     od;
@@ -297,7 +304,7 @@ InstallGlobalFunction(FroidurePin, function(A)
   tasks := [];
   MakeReadOnly(A); #Generators never change
 
-  while CheckFragments(Y) and currentLength <= 1 do
+  while CheckFragments(Y) and currentLength <= 100 do
     Q := CreateQueues(jobs);
 
     for j in [1 .. jobs] do
