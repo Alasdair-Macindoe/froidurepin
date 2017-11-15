@@ -36,11 +36,6 @@ FragmentSize := function(fragment)
   return Size(fragment.Y);
 end;
 
-#Creates a default Fragment of words
-DefaultFragment := function(words)
-  return Fragment(words, 1);
-end;
-
 EmptyFragment := function()
   return Fragment(HashMap(), 1);
 end;
@@ -268,13 +263,18 @@ DevelopLeft := function(A, Y, j, currentLength)
 end;
 
 #Merges all the fragments into one list
-Enumerated := function(Y)
-  local result, i, temp_list, j;
+Enumerated := function(fragments)
+  local result, i, temp_list, j, k;
   result := [];
-  for i in [1 .. Length(Y)] do
-    temp_list := AsList(Y[i].Y);
+  for i in [1 .. Length(fragments)] do
+    temp_list := [];
+    for k in [1 .. Length(fragments[i].Y![6])] do
+      if IsBound(fragments[i].Y![6][k]) then
+        Add(temp_list, fragments[i].Y![6][k]);
+      fi;
+    od;
     for j in [1 .. Length(temp_list)] do
-      Append(result, temp_list[j][1]);
+      Add(result, temp_list[j]);
     od;
   od;
   return result;
@@ -317,5 +317,6 @@ InstallGlobalFunction(FroidurePin, function(A)
 
     currentLength := currentLength + 1;
   od;
+  #return Y;
   return Enumerated(Y);
 end);
