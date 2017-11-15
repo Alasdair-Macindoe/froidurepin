@@ -269,11 +269,13 @@ end;
 
 #Merges all the fragments into one list
 Enumerated := function(Y)
-  local result, i;
+  local result, i, temp_list, j;
   result := [];
   for i in [1 .. Length(Y)] do
-    #TODO
-    Append(result, AsList(Y[i].Y));
+    temp_list := AsList(Y[i].Y);
+    for j in [1 .. Length(temp_list)] do
+      Append(result, temp_list[j][1]);
+    od;
   od;
   return result;
 end;
@@ -295,8 +297,7 @@ InstallGlobalFunction(FroidurePin, function(A)
   tasks := [];
   MakeReadOnly(A); #Generators never change
 
-  while CheckFragments(Y) and currentLength <= 100 do
-
+  while CheckFragments(Y) and currentLength <= 1 do
     Q := CreateQueues(jobs);
 
     for j in [1 .. jobs] do
