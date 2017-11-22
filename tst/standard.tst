@@ -1,6 +1,6 @@
 gap> START_TEST("FroidurePin implementions test");
 gap> LoadPackage("froidurepin", false);;
-gap> Read("test_data.g");;
+gap> Read("pkg/froidurepin/tst/test_data.g");;
 gap> g_0 = [ Transformation( [ 2, 4, 2, 5, 5 ] ), Transformation( [ 3, 5, 4, 2, 3 ] ), Transformation( [ 4, 3, 2, 4, 4 ] ) ];
 true
 gap> r := FroidurePin(g_0);;
