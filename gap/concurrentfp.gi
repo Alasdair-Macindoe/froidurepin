@@ -170,7 +170,7 @@ CreateQueues := function(k)
   for i in [1 .. k] do
     Add(queue, []);
   od;
-  return MakeReadOnly(queue);
+  return MakeReadOnlyObj(queue);
 end;
 
 AddQueue := function(queue, j, word)
@@ -299,10 +299,10 @@ InstallGlobalFunction(FroidurePin, function(A)
   local Y, currentLength, jobs, j, Q, tasks;
   currentLength := 1;
   jobs := Length(A);
-  Y := MakeReadOnly(CreateEmptyFragments(jobs)); #The fragments can be stored in a list
+  Y := MakeReadOnlyObj(CreateEmptyFragments(jobs)); #The fragments can be stored in a list
   InitFromGenerators(A, Y, jobs);
   tasks := [];
-  MakeReadOnly(A); #Generators never change
+  MakeReadOnlyObj(A); #Generators never change
 
   while CheckFragments(Y) and currentLength <= 100 do
     Q := CreateQueues(jobs);
