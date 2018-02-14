@@ -63,6 +63,8 @@ end;
 #Word should be a Word record (not WordEntry record)
 AddToFragment := function(fragment, word)
   fragment.Y[word.value] := word;
+  ShareObj(word, "Main");
+  ShareObj(fragment.Y[word.value], "Main");
   Add(fragment.V, word);
 end;
 
@@ -279,7 +281,13 @@ Enumerated := function(fragments)
   local result, i, temp_list, j, k;
   result := [];
   for i in [1 .. Length(fragments)] do
-    temp_list := CreateList(fragments[i].Y);
+    Print(RegionOf(fragments[i].Y), "\n");
+    Print(RegionOf(fragments[i].Y[1]), "\n");
+    Print(RegionOf([1,2]));
+    Print(RegionOf(fragments[i].Y![6]), "\n");
+    Print("\n");
+    #temp_list := CreateList(fragments[i].Y);
+    temp_list := Values(fragments[i].Y);
     for j in [1 .. Length(temp_list)] do
       Add(result, temp_list[j]);
     od;
@@ -299,7 +307,9 @@ InstallGlobalFunction(FroidurePin, function(A)
   local Y, currentLength, jobs, j, Q, tasks;
   currentLength := 1;
   jobs := Length(A);
-  Y := MakeReadOnlyObj(CreateEmptyFragments(jobs)); #The fragments can be stored in a list
+  #Y := ShareObj(CreateEmptyFragments(jobs), "Main"); #The fragments can be stored in a list
+  Y := CreateEmptyFragments(jobs);
+  #atomic readwrite Y do
   InitFromGenerators(A, Y, jobs);
   tasks := [];
   MakeReadOnlyObj(A); #Generators never change
@@ -326,4 +336,5 @@ InstallGlobalFunction(FroidurePin, function(A)
   od;
   #return Y;
   return Enumerated(Y);
+#od;
 end);
