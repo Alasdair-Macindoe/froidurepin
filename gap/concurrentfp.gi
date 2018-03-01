@@ -22,29 +22,19 @@ b := function(w, jobs)
   return (HashBasic(w) mod jobs) + 1;
 end;
 
-CreateList := function(ht)
-  local temp_list, k;
-  temp_list := [];
-  for k in [1 .. Length(ht![6])] do
-    if IsBound(ht![6][k]) then
-      Add(temp_list, ht![6][k]);
-    fi;
-  od;
-  return temp_list;
-end;
 #This corresponds to a fragment of reduced words and its corresponding K value
 #Use this method to create a new Fragment. Care should be taken when using this,
 #generally use a supplementary method is correct
 Fragment := function(words, k)
-  return rec(
+  return MAKE_PUBLIC(rec(
     Y := words, #This is a list of (reduced) Word records
     K := k,
-    V := CreateList(words)
-  );
+    V := Values(words)
+  ));
 end;
 
 FragmentSize := function(fragment)
-  return Size(fragment.Y);
+  return Length(fragment.V);
 end;
 
 EmptyFragment := function()
@@ -73,7 +63,7 @@ GetWordFromFragment := function(fragment, number)
   return fragment.V[number];
 end;
 
-CheckFragments := function(fragments)
+CheckFragments := atomic function(readonly fragments)
   local i, w;
   for i in [1 .. Length(fragments)] do
     if fragments[i].K <= FragmentSize(fragments[i]) then
@@ -214,14 +204,13 @@ ApplyGenerators := function (A, Y, Q, j, currentLength, jobs)
         v.rightFlag[i] := false;
       else #otherwise it is completely new
         word := CreateNewWord(word, YjKj.first, i, YjKj, A[i], Length(A), currentLength + 1, jobs);
-        YjKj.right[i] := word.word; #Is this the bug in V1_1?
+        YjKj.right[i] := word.word;
         YjKj.rightFlag[i] := true;
         AddQueue(Q, j, word);
       fi;
 
     od;
-
-    Yj.K := Yj.K + 1;
+    Y[j].K := Yj.K + 1;
   od;
   return 0;
 end;
@@ -275,11 +264,11 @@ DevelopLeft := function(A, Y, j, currentLength)
 end;
 
 #Merges all the fragments into one list
-Enumerated := function(fragments)
+Enumerated := atomic function(readonly fragments)
   local result, i, temp_list, j, k;
   result := [];
   for i in [1 .. Length(fragments)] do
-    temp_list := CreateList(fragments[i].Y);
+    temp_list := fragments[i].V;
     for j in [1 .. Length(temp_list)] do
       Add(result, temp_list[j]);
     od;
@@ -299,8 +288,9 @@ InstallGlobalFunction(FroidurePin, function(A)
   local Y, currentLength, jobs, j, Q, tasks;
   currentLength := 1;
   jobs := Length(A);
-  Y := MakeReadOnlyObj(CreateEmptyFragments(jobs)); #The fragments can be stored in a list
-  InitFromGenerators(A, Y, jobs);
+  Y := ShareSingleObj(CreateEmptyFragments(jobs), "Main"); #The fragments can be stored in a list
+  #Y := CreateEmptyFragments(jobs);
+  atomic Y do InitFromGenerators(A, Y, jobs); od;
   tasks := [];
   MakeReadOnlyObj(A); #Generators never change
 
