@@ -26,11 +26,11 @@ end;
 #Use this method to create a new Fragment. Care should be taken when using this,
 #generally use a supplementary method is correct
 Fragment := function(words, k)
-  return rec(
+  return MAKE_PUBLIC(rec(
     Y := words, #This is a list of (reduced) Word records
     K := k,
     V := Values(words)
-  );
+  ));
 end;
 
 FragmentSize := function(fragment)
@@ -53,10 +53,7 @@ end;
 #Word should be a Word record (not WordEntry record)
 AddToFragment := function(fragment, word)
   fragment.Y[word.value] := word;
-  #ShareObj(word, "Main");
-  #ShareObj(fragment.Y[word.value], "Main");
   Add(fragment.V, word);
-  #Print(fragment.V, "\n============ Length: ", Length(fragment.V), " =====\n");
 end;
 
 GetWordFromFragment := function(fragment, number)
@@ -66,7 +63,7 @@ GetWordFromFragment := function(fragment, number)
   return fragment.V[number];
 end;
 
-CheckFragments := function(fragments)
+CheckFragments := atomic function(readonly fragments)
   local i, w;
   for i in [1 .. Length(fragments)] do
     if fragments[i].K <= FragmentSize(fragments[i]) then
@@ -140,7 +137,6 @@ InitFromGenerators := function(A, Y, jobs)
       word.word.suffix := word.word;
       word.word.prefix := word.word;
       AddToFragment(Y[word.b], word.word);
-      Print("Word.b: ", word.b, "\n");
       A[i] := word.word;
     else
       l.right[i] := a;
@@ -184,11 +180,7 @@ ApplyGenerators := function (A, Y, Q, j, currentLength, jobs)
         p, #p(y)
         i;
   Yj := Y[j]; #This is a specific fragment now
-  Print("\n\n==START== Frag: ", j, " size: ", FragmentSize(Y[j]), " -- ", "Word Len: ", WordLength(GetWordFromFragment(Yj, Yj.K)), " -- Current Length:", currentLength, " Yj.K: ", Yj.K, "\n");
-  Print("Region of Yj: ", RegionOf(Yj), " and its K: ", RegionOf(Yj.K), "\n");
-  Print("Yj.V: ", Length(Yj.V), "\n");
   while Yj.K <= FragmentSize(Yj) and WordLength(GetWordFromFragment(Yj, Yj.K)) = currentLength do
-    Print("Loop\n");
     YjKj := GetWordFromFragment(Yj, Yj.K);
     s := YjKj.suffix;
     #for a in A
@@ -214,22 +206,18 @@ ApplyGenerators := function (A, Y, Q, j, currentLength, jobs)
         word := CreateNewWord(word, YjKj.first, i, YjKj, A[i], Length(A), currentLength + 1, jobs);
         YjKj.right[i] := word.word;
         YjKj.rightFlag[i] := true;
-        Print("Adding word\n");
         AddQueue(Q, j, word);
       fi;
 
     od;
     Y[j].K := Yj.K + 1;
-    Print("Updated Yj.K: ", Y[j].K, "\n");
   od;
-  Print("\n\n==END== Frag: ", j, " size: ", FragmentSize(Y[j]), " -- ", "Word Len: ", WordLength(GetWordFromFragment(Yj, Yj.K)), " -- Current Length:", currentLength, " Yj.K: ", Y[j].K, "\n");
   return 0;
 end;
 
 ProcessQueues := function(Y, Q, j)
   local q, i, k, word, value, l, w;
   #for b(wa), wa) in Q
-  Print("Processing Queue\n");
   for i in [1 .. Length(Q)] do #for every queue
     q := Q[i];
     for k in [1 .. Length(q)] do #for every word
@@ -246,7 +234,6 @@ ProcessQueues := function(Y, Q, j)
           w.rightFlag[word.last] := false;
         else
           AddToFragment(Y[j], word); #This adds the word entry to the fragment
-          Print("Adding to frag Frag Size: ", FragmentSize(Y[j]), " J: ", j, "\n");
           w.right[word.last] := word;
           w.rightFlag[word.last] := true;
         fi;
@@ -254,14 +241,12 @@ ProcessQueues := function(Y, Q, j)
 
     od;
   od;
-  Print("PQ Frag size: ", FragmentSize(Y[j]), " and j: ", j, "\n");
   return 0;
 end;
 
 DevelopLeft := function(A, Y, j, currentLength)
   local Yj, i, Yji, k, p, Lj;
   Yj := Y[j];
-  Print("DL START Frag size: ", FragmentSize(Y[j]), " j: ", j, "\n");
   for i in [1 .. FragmentSize(Yj)] do
     Yji := Yj.Y[i];
     if WordLength(Yji) = currentLength then
@@ -275,17 +260,15 @@ DevelopLeft := function(A, Y, j, currentLength)
       od;
     fi;
   od;
-  Print("DL END Frag size: ", FragmentSize(Y[j]), " j: ", j, "\n");
   return 0;
 end;
 
 #Merges all the fragments into one list
-Enumerated := function(fragments)
+Enumerated := atomic function(readonly fragments)
   local result, i, temp_list, j, k;
   result := [];
   for i in [1 .. Length(fragments)] do
     temp_list := fragments[i].V;
-    Print("Temp list len: ", Length(temp_list), "\n");
     for j in [1 .. Length(temp_list)] do
       Add(result, temp_list[j]);
     od;
@@ -305,14 +288,13 @@ InstallGlobalFunction(FroidurePin, function(A)
   local Y, currentLength, jobs, j, Q, tasks;
   currentLength := 1;
   jobs := Length(A);
-  #Y := MigrateObj(CreateEmptyFragments(jobs), "Main"); #The fragments can be stored in a list
-  Y := CreateEmptyFragments(jobs);
-  InitFromGenerators(A, Y, jobs);
+  Y := ShareSingleObj(CreateEmptyFragments(jobs), "Main"); #The fragments can be stored in a list
+  #Y := CreateEmptyFragments(jobs);
+  atomic Y do InitFromGenerators(A, Y, jobs); od;
   tasks := [];
   MakeReadOnlyObj(A); #Generators never change
 
-  while CheckFragments(Y) and currentLength <= 10 do
-    Print("Looping for: ", currentLength, "\n");
+  while CheckFragments(Y) and currentLength <= 100 do
     Q := CreateQueues(jobs);
 
     for j in [1 .. jobs] do
