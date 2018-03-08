@@ -36,11 +36,6 @@ git clone https://github.com/gap-packages/datastructures
 cd datastructures
 ls
 ./autogen.sh
-./configure
-make -j4 V=1 CPPFLAGS="-I../../extern/install/libatomic_ops/include/ -L../../extern/install/libatomic_ops/lib"
+./configure CPPFLAGS="-I../../extern/install/libatomic_ops/include/ -L../../extern/install/libatomic_ops/lib"
+make -j4 
 cd ../../..
-
-ls
-ls $GAPROOT
-ls $GAPROOT/pkg
-ln -s $PWD $GAPROOT/pkg/
