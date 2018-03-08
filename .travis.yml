@@ -17,6 +17,3 @@ before_script:
   - scripts/build_gap.sh
 script:
   - scripts/run_tests.sh
-after_script:
-  - bash scripts/gather_coverage.sh
-  - bash <(curl -s https://codecov.io/bash)

@@ -22,8 +22,17 @@ cd pkg
 # install latest version of datastructures
 git clone https://github.com/gap-packages/datastructures
 cd datastructures
-ls
 ./autogen.sh
 ./configure CPPFLAGS="-I../../extern/install/libatomic_ops/include/ -L../../extern/install/libatomic_ops/lib"
 make -j4 
 cd ../../..
+
+# Move FroidurePin
+mkdir $GAPROOT/pkg/froidurepin
+mv aux $GAPROOT/pkg/froidurepin
+mv doc $GAPROOT/pkg/froidurepin
+mv gap $GAPROOT/pkg/froidurepin
+mv *.g $GAPROOT/pkg/froidurepin
+mv LICENSE $GAPROOT/pkg/froidurepin
+mv README.md $GAPROOT/pkg/froidurepin
+mv tst $GAPROOT/pkg/froidurepin
