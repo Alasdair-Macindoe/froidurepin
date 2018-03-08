@@ -19,18 +19,6 @@ make bootstrap-pkg-minimal
 # build some packages...
 cd pkg
 
-# install latest version of profiling
-git clone https://github.com/gap-packages/profiling
-cd profiling
-./autogen.sh
-# HACK to workaround problems when building with clang
-if [[ $CC = clang ]]
-then
-    export CXX=clang++
-fi
-./configure $CONFIGFLAGS
-make -j4 V=1
-
 # install latest version of datastructures
 git clone https://github.com/gap-packages/datastructures
 cd datastructures
