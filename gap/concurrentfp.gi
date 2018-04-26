@@ -317,3 +317,36 @@ InstallGlobalFunction(FroidurePin, function(A)
   #return Y;
   return Enumerated(Y);
 end);
+
+PrefixTree := function(length)
+  local _LAYER;
+  #Layer of the tree at a specific depth
+  _LAYER := [1..length]*0; # Init to 0
+  return _LAYER; # Will store pointers when used
+end;
+
+AddToTree := function(root, values, index)
+  # Root is the top of the prefix tree
+  # Values is a list, eg [1, 7, 8, 5] will add 1785 to the correct place
+  # Index is the current value we are looking at, begins at 1 eg layer 1
+  # The index tells us if it is used, eg if 1 has a pointer then 1 is used
+  # if that pointer takes us to 5 then 1, 5 is in the tree. If that 5 only
+  # has nulls then 1,5 is the end of that tree.
+  # Take the first value
+  local cur_layer, value;
+  if Length(values) = index then
+    return true; # We are done!
+  fi;
+  value := values[index]; # Indexed by 1
+  cur_layer := root[value];
+  if cur_layer <> 0 then
+    # This case means that we have another pointer
+    return AddToTree(cur_layer, values, index + 1);
+  else
+    # This layer is empty and we need to create it
+    root[value] := PrefixTree(Length(root));
+    return AddToTree(root[value], values, index + 1);
+  fi;
+  return false;
+end;
+
